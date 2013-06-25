@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Sns Trend
-Plugin URI: 
-Description: 
-Author: 
-Version: 
-Author URI: 
+Plugin URI: https://github.com/among753/sns-trend
+Description: SNS Trend Raning
+Author: among753
+Version: 0.1.0
+Author URI: https://github.com/among753
 */
 
 register_activation_hook(__FILE__, 'sns_trend_activate');

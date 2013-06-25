@@ -18,8 +18,20 @@ class SnsTrendLoader extends MvcPluginLoader {
 		add_option('sns_trend_db_version', $this->db_version);
 		
 		// Use dbDelta() to create the tables for the app here
-		// $sql = '';
-		// dbDelta($sql);
+		$sql = '
+        CREATE TABLE '.$wpdb->prefix.'trends (
+          id int(11) NOT NULL auto_increment,
+          name varchar(255) NOT NULL,
+          url varchar(255) default NULL,
+          description text,
+          address1 varchar(255) default NULL,
+          address2 varchar(255) default NULL,
+          city varchar(100) default NULL,
+          state varchar(5) default NULL,
+          zip varchar(20) default NULL,
+          PRIMARY KEY  (id)
+        )';
+		dbDelta($sql);
 		
 	}
 
