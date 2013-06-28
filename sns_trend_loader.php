@@ -33,6 +33,34 @@ class SnsTrendLoader extends MvcPluginLoader {
         )';
 		dbDelta($sql);
 		
+		$sql = '
+        CREATE TABLE '.$wpdb->prefix.'trend_lists (
+          id int(11) NOT NULL auto_increment,
+          name varchar(255) NOT NULL,
+          description text,
+          created datetime,
+          modified datetime,
+          PRIMARY KEY  (id)
+        )';
+		dbDelta($sql);
+		$sql = '
+        CREATE TABLE '.$wpdb->prefix.'trend_keyword (
+          keyword_id int(11) NOT NULL auto_increment,
+          word varchar(255) NOT NULL,
+          created datetime,
+          PRIMARY KEY  (keyword_id)
+        )';
+		dbDelta($sql);
+		$sql = '
+        CREATE TABLE '.$wpdb->prefix.'trend_datas (
+          id int(11) NOT NULL auto_increment,
+          value text,
+          created datetime,
+          modified datetime,
+          PRIMARY KEY  (id)
+        )';
+		dbDelta($sql);
+		
 	}
 
 	function deactivate() {
