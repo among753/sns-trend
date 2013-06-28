@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: WP MVC
-Plugin URI: http://wordpress.org/extend/plugins/wp-mvc/
-Description: Sets up an MVC framework inside of WordPress.
-Author: Tom Benner
-Version: 1.2
-Author URI: 
+#Plugin Name#: WP MVC
+#Plugin URI#: http://wordpress.org/extend/plugins/wp-mvc/
+#Description#: Sets up an MVC framework inside of WordPress.
+#Author#: Tom Benner
+#Version#: 1.2
+#Author URI#: 
 */
 
 if (!defined('MVC_PLUGIN_PATH')) {
