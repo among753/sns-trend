@@ -10,7 +10,7 @@ Author URI: https://github.com/among753
 
 
 // move core file in this directry
-require_once dirname(__FILE__).'/wp_mvc.php';
+//require_once dirname(__FILE__).'/wp_mvc.php';
 
 
 register_activation_hook(__FILE__, 'sns_trend_activate');

@@ -1,5 +1,10 @@
 <h2><?php echo MvcInflector::pluralize_titleize($model->name); ?></h2>
 
+<?php 
+//echo "おぶじぇくと\n"; var_dump($objects);
+?>
+
+
 <form id="posts-filter" action="<?php echo MvcRouter::admin_url(); ?>" method="get">
 
 	<p class="search-box">

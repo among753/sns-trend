@@ -44,8 +44,9 @@ class SnsTrendLoader extends MvcPluginLoader {
         )';
 		dbDelta($sql);
 		$sql = '
-        CREATE TABLE '.$wpdb->prefix.'trend_keyword (
+        CREATE TABLE '.$wpdb->prefix.'trend_keywords (
           keyword_id int(11) NOT NULL auto_increment,
+          trend_list_id int(11) default NULL,
           word varchar(255) NOT NULL,
           created datetime,
           PRIMARY KEY  (keyword_id)
