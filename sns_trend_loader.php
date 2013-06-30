@@ -4,7 +4,20 @@ class SnsTrendLoader extends MvcPluginLoader {
 
 	var $db_version = '1.0';
 	var $tables = array();
-
+	
+	function init() {
+	
+		// Include any code here that needs to be called when this class is instantiated
+	
+		$this->tables = array(
+			'trends' => $this->wpdb->prefix.'trends',
+			'trend_lists' => $this->wpdb->prefix.'trend_lists',
+			'trend_keywords' => $this->wpdb->prefix.'trend_keywords',
+			'trend_datas' => $this->wpdb->prefix.'trend_datas'
+		);
+	
+	}
+	
 	function activate() {
 	
 		// This call needs to be made to activate this app within WP MVC
@@ -19,7 +32,7 @@ class SnsTrendLoader extends MvcPluginLoader {
 		
 		// Use dbDelta() to create the tables for the app here
 		$sql = '
-        CREATE TABLE '.$wpdb->prefix.'trends (
+        CREATE TABLE '.$this->tables['trends'].' (
           id int(11) NOT NULL auto_increment,
           name varchar(255) NOT NULL,
           url varchar(255) default NULL,
@@ -34,7 +47,7 @@ class SnsTrendLoader extends MvcPluginLoader {
 		dbDelta($sql);
 		
 		$sql = '
-        CREATE TABLE '.$wpdb->prefix.'trend_lists (
+        CREATE TABLE '.$this->tables['trend_lists'].' (
           id int(11) NOT NULL auto_increment,
           name varchar(255) NOT NULL,
           description text,
@@ -44,24 +57,29 @@ class SnsTrendLoader extends MvcPluginLoader {
         )';
 		dbDelta($sql);
 		$sql = '
-        CREATE TABLE '.$wpdb->prefix.'trend_keywords (
+        CREATE TABLE '.$this->tables['trend_keywords'].' (
           keyword_id int(11) NOT NULL auto_increment,
-          trend_list_id int(11) default NULL,
+          list_id int(11) default NULL,
           word varchar(255) NOT NULL,
           created datetime,
-          PRIMARY KEY  (keyword_id)
+          modified datetime,
+        		PRIMARY KEY  (keyword_id),
+          KEY list_id (list_id)
         )';
 		dbDelta($sql);
 		$sql = '
-        CREATE TABLE '.$wpdb->prefix.'trend_datas (
+        CREATE TABLE '.$this->tables['trend_datas'].' (
           id int(11) NOT NULL auto_increment,
+          list_id int(11) default NULL,
           value text,
           created datetime,
           modified datetime,
-          PRIMARY KEY  (id)
+          PRIMARY KEY  (id),
+          KEY list_id (list_id)
         )';
 		dbDelta($sql);
 		
+		$this->insert_example_data();
 	}
 
 	function deactivate() {
@@ -74,6 +92,117 @@ class SnsTrendLoader extends MvcPluginLoader {
 	
 	}
 
+	function insert_example_data() {
+	
+		// Only insert the example data if no data already exists
+	
+		$sql = '
+			SELECT
+				id
+			FROM
+				'.$this->tables['trends'].'
+			LIMIT
+				1';
+		$data_exists = $this->wpdb->get_var($sql);
+		if ($data_exists) {
+			return false;
+		}
+	
+		// Insert example data
+	
+		$rows = array(
+				array(
+//						'id' => 1,
+						'name' => "さんぷる",
+						'url' => "http://localhost/",
+						'description' => "さんぷる",
+						'address1' => "さんぷる",
+						'address2' => "さんぷる",
+						'city' => "さんぷる",
+						'state' => "さんぷる",
+						'zip' => "さんぷる",
+				),
+		);
+		foreach($rows as $row) {
+			$this->wpdb->insert($this->tables['trends'], $row);
+		}
+	
+		$rows = array(
+				array(
+//						'id' => 1,
+						'name' => "WordPress",
+						'description' => "WordPressの説明",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+				array(
+//						'id' => 2,
+						'name' => "Movable Type",
+						'description' => "Movable Typeの説明",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+		);
+		foreach($rows as $row) {
+			$this->wpdb->insert($this->tables['trend_lists'], $row);
+		}
+	
+		$rows = array(
+				array(
+//						'keyword_id' => 1,
+						'list_id' => 1,
+						'word' => "ワードプレス",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+				array(
+//						'keyword_id' => 2,
+						'list_id' => 1,
+						'word' => "ワープロ",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+				array(
+//						'keyword_id' => 3,
+						'list_id' => 2,
+						'word' => "ムーバブルタイプ",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+		);
+		foreach($rows as $row) {
+			$this->wpdb->insert($this->tables['trend_keywords'], $row);
+		}
+	
+		$rows = array(
+				array(
+//						'id' => 1,
+						'list_id' => 1,
+						'value' => "WordPressってすごいですね！なんたって！！！",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+				array(
+//						'id' => 1,
+						'list_id' => 1,
+						'value' => "ワードプレスワードプレスワードプレスワードプレスワードプレス",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+				array(
+//						'id' => 1,
+						'list_id' => 2,
+						'value' => "Mobable Type (笑)",
+						'created' => "2013-1-10 15:00",
+						'modified' => "2013-1-10 15:00"
+				),
+		);
+		foreach($rows as $row) {
+			$this->wpdb->insert($this->tables['trend_datas'], $row);
+		}
+		
+	}
+	
 }
 
 ?>

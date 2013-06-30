@@ -8,7 +8,7 @@ class AdminTrendListsController extends MvcAdminController {
 			'description', 
 			'created', 
 			'modified', 
-			'trend_keyword_names' =>'きーわーど',
+			'keywords_str' =>'keywords',
 			'aaaaaa' => array('value_method' => 'test_method'), 
 	);
 	
@@ -17,6 +17,21 @@ class AdminTrendListsController extends MvcAdminController {
 		//var_dump($this);
 	}
 	
+	public function edit() {
+		// edit form
+        $this->set_trend_keywords();
+		$this->verify_id_param();
+		$this->create_or_save();
+		$this->set_object();
+		
+		// TrendData index where list_id
+		$this->load_model('TrendData');
+		$trend_Datas = $this->TrendData->find_by_id($this->params['id']);
+        $this->set('trend_Datas', $trend_Datas);
+		
+	}
+
+
 	function example_page() {
 	
 	
@@ -34,11 +49,21 @@ class AdminTrendListsController extends MvcAdminController {
 		$this->set_objects();
 	
 	}
-	
-	
+
+
+
 	function test_method($object) {
 		//var_dump($object);
 		return 'うあわあああああああああ';
+	}
+
+	private function set_trend_keywords()
+	{
+		$this->load_model('TrendKeyword');
+//		$trend_keywords = $this->TrendKeyword->find_by_list_id($this->params['id'], array('selects' => array('keyword_id', 'word')));
+		$trend_keywords = $this->TrendKeyword->find(array('selects' => array('keyword_id', 'list_id', 'word')));
+		$this->set('trend_keywords', $trend_keywords);
+		//var_dump($trend_keywords);
 	}
 }
 
