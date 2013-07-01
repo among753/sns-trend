@@ -4,6 +4,7 @@
 <?php echo $this->form->input('name'); ?>
 <?php echo $this->form->input('description'); ?>
 <?php echo $this->form->has_many_dropdown('TrendKeyword', $trend_keywords, array('style' => 'width: 200px;', 'empty' => true)); ?>
+<p>キーワードの新規登録フォーム</p>
 <?php echo $this->form->input('created'); ?>
 <?php echo $this->form->input('modified'); ?>
 <?php echo $this->form->end('Update'); ?>
