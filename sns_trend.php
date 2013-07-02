@@ -1,16 +1,12 @@
 <?php
 /*
-Plugin Name: Sns Trend
+Plugin Name: SNS Trend
 Plugin URI: https://github.com/among753/sns-trend
-Description: SNS Trend Raning
+Description: SNS Trend Ranking
 Author: among753
 Version: 0.1.0
 Author URI: https://github.com/among753
 */
-
-
-// move core file in this directry
-//require_once dirname(__FILE__).'/wp_mvc.php';
 
 
 register_activation_hook(__FILE__, 'sns_trend_activate');

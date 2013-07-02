@@ -1,10 +1,25 @@
 <?php
 
+
+/**
+ * Class SnsTrendLoader
+ * http://takahashifumiki.com/web/programing/1440/
+ */
 class SnsTrendLoader extends MvcPluginLoader {
 
 	var $db_version = '1.0';
 	var $tables = array();
-	
+
+	protected $wpdb = null;
+	protected $file_includer = null;
+
+	function __construct() {
+		global $wpdb;
+		$this->wpdb = $wpdb;
+		$this->file_includer = new MvcFileIncluder();
+		$this->init();
+	}
+
 	function init() {
 	
 		// Include any code here that needs to be called when this class is instantiated
