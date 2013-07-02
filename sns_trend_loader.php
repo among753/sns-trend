@@ -49,6 +49,7 @@ class SnsTrendLoader extends MvcPluginLoader {
 		$sql = '
         CREATE TABLE '.$this->tables['trend_lists'].' (
           id int(11) NOT NULL auto_increment,
+          post_id BIGINT(20) NOT NULL,
           name varchar(255) NOT NULL,
           description text,
           created datetime,
@@ -63,8 +64,8 @@ class SnsTrendLoader extends MvcPluginLoader {
           word varchar(255) NOT NULL,
           created datetime,
           modified datetime,
-        		PRIMARY KEY  (keyword_id),
-          KEY list_id (list_id)
+          PRIMARY KEY  (keyword_id),
+          KEY list_id (post_id)
         )';
 		dbDelta($sql);
 		$sql = '
@@ -128,8 +129,9 @@ class SnsTrendLoader extends MvcPluginLoader {
 		}
 	
 		$rows = array(
-				array(
-//						'id' => 1,
+					array(
+//				        'id' => 1,
+						'post_id' => 0,
 						'name' => "WordPress",
 						'description' => "WordPressの説明",
 						'created' => "2013-1-10 15:00",
@@ -137,7 +139,7 @@ class SnsTrendLoader extends MvcPluginLoader {
 				),
 				array(
 //						'id' => 2,
-						'name' => "Movable Type",
+						'post_id' => 10,
 						'description' => "Movable Typeの説明",
 						'created' => "2013-1-10 15:00",
 						'modified' => "2013-1-10 15:00"
