@@ -13,8 +13,21 @@ class TrendList extends MvcModel {
 	var $wp_post = array(
 		'post_type' => array(
 			'args' => array(
+				'show_ui' => true,
 				'show_in_menu' => true,
-				'supports' => array('title')
+				'supports' => array(
+					'title',
+					'editor',
+					'author',
+					'thumbnail',
+					'excerpt',
+					'trackbacks',
+					'custom-fields',
+					'comments',
+					'revisions',
+					'page-attributes',
+					'post-formats',
+				)
 			),
 			'fields' => array(
 				'post_title' => 'generate_post_title()',
