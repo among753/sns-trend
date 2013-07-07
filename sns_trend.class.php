@@ -1,19 +1,18 @@
 <?php
-/*
-Plugin Name: SNS Trend Develop
-Plugin URI: https://github.com/among753/sns-trend
-Description: SNS Trend Ranking
-Author: among753
-Version: 0.1.0
-Author URI: https://github.com/among753
-*/
 
-
+/**
+ * Class SnsTrend
+ */
 class SnsTrend {
 
-	public $version = "0.9";
-
-	public $db_version = 0;
+	/**
+	 * @var string プラグインをアップデートする場合は更新
+	 */
+	public $version = "0.1";
+	/**
+	 * @var string DBをアップデートする場合は更新
+	 */
+	public $db_version = "0.1.4";
 
 	public $tables = array();
 
@@ -21,33 +20,106 @@ class SnsTrend {
 		global $wpdb;
 		$this->wpdb = $wpdb;
 
-		//オプションからsns_trend_db_versionというデータを取得する。なければ0。
-		$this->db_version = get_option('sns_trend_db_version', 0);
-
 		$this->init();
 	}
 
 
 	protected function init() {
 
+		//#TODO ワードのリストはカスタム投稿タイプ'trend'を使う。postmetaにwordを設定。searchAPIで検索されたデータをtrendsテーブルに格納
 		$this->tables = array(
 			'trends' => $this->wpdb->prefix.'trends',
-			'trend_lists' => $this->wpdb->prefix.'trend_lists',
-			'trend_keywords' => $this->wpdb->prefix.'trend_keywords',
-			'trend_datas' => $this->wpdb->prefix.'trend_datas'
 		);
+
 		// hook
 		//var_dump("うわああああああああ");
 
+		// カスタム投稿タイプ追加
+		add_action('init', array($this, 'book_type_register'), 0);
 
+		// 管理メニューに追加するフック
+		add_action('admin_menu', 'mt_add_pages');
+		// 上のフックに対するaction関数
+		function mt_add_pages() {
+			// 設定メニュー下にサブメニューを追加:
+			add_options_page('Test Options', 'Test Options', 'administrator', 'testoptions', 'mt_options_page');
+
+			// 管理メニューにサブメニューを追加
+			add_management_page('Test Manage', 'Test Manage', 'administrator', 'testmanage', 'mt_manage_page');
+
+			// 新しいトップレベルメニューを追加(分からず屋):
+			add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', __FILE__, 'mt_toplevel_page');
+
+			// カスタムのトップレベルメニューにサブメニューを追加:
+			add_submenu_page(__FILE__, 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', 'mt_sublevel_page');
+
+			// カスタムのトップレベルメニューに二つ目のサブメニューを追加:
+			add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', 'mt_sublevel_page2');
+		}
+
+		// mt_options_page() はTest Optionsサブメニューのページコンテンツを表示
+		function mt_options_page() {
+			echo "<h2>Test Options</h2>";
+		}
+
+		// mt_manage_page()はTest Manageサブメニューにページコンテんツを表示
+		function mt_manage_page() {
+			echo "<h2>Test Manage</h2>";
+		}
+
+		// mt_toplevel_page()は カスタムのトップレベルメニューのコンテンツを表示
+		function mt_toplevel_page() {
+			echo "<h2>Test Toplevel</h2>";
+		}
+
+		// mt_sublevel_page() はカスタムのトップレベルメニューの
+		// 最初のサブメニューのコンテンツを表示
+		function mt_sublevel_page() {
+			echo "<h2>Test Sublevel</h2>";
+		}
+
+// mt_sublevel_page2() はカスタムのトップレベルメニューの
+// 二番目のサブメニューを表示
+		function mt_sublevel_page2() {
+			echo "<h2>Test Sublevel 2</h2>";
+		}
 	}
 
+
+	/**
+	 * カスタム投稿タイプ追加
+	 */
+	protected function book_type_register() {
+		$main_label = '書籍';
+		$labels = array (
+			'name' => _x($main_label, 'books'),
+			'singular_name' => _x($main_label, 'book')
+		);
+		$args = array (
+			'labels' => $labels,
+			'public' => true,
+			'publicly_queryable' => true,
+			'show_ui' => true,
+			'query_var' => true,
+			'rewrite' => true,
+			'capability_type' => 'post',
+			'hierarchical' => false,
+			'menu_position' => 5,
+			'supports' => array ('title'),
+			'has_archive' => true
+		);
+		register_post_type('book', $args);
+	}
+
+
 	public function activate() {
+		//#TODO 複数テーブルのアクティベート化 tableをmodel化してmodel単位で扱う
+
 		//データベースが存在するか確認
-		$is_db_exists = $this->wpdb->get_var($this->wpdb->prepare("SHOW TABLES LIKE %s", $this->tables['trend']));
+		$is_db_exists = $this->wpdb->get_var($this->wpdb->prepare("SHOW TABLES LIKE %s", $this->tables['trends']));
 		if($is_db_exists){
 			//データベースが最新かどうか確認
-			if($this->db_version >= $this->version){
+			if(version_compare(get_option('sns_trend_db_version', 0), $this->db_version, ">=")){
 				//必要なければ関数を終了
 				return;
 			}
@@ -68,18 +140,50 @@ class SnsTrend {
 
 		$sql = '
         CREATE TABLE '.$this->tables['trends'].' (
-          id int(11) NOT NULL auto_increment,
-          name varchar(255) NOT NULL,
-          url varchar(255) default NULL,
-          description text,
-          address1 varchar(255) default NULL,
-          address2 varchar(255) default NULL,
-          city varchar(100) default NULL,
-          state varchar(5) default NULL,
-          zip varchar(20) default NULL,
+          id bigint(20) NOT NULL auto_increment,
+          post_id bigint(20) NOT NULL,
+          data text,
+          created datetime,
+          modified datetime,
           PRIMARY KEY  (id)
         )';
-		dbDelta($sql);
+		$result = dbDelta($sql);
+		//#TODO create の時のみサンプルデータをinsert
+		$this->insert_example_data($result);
+	}
+
+	protected function insert_example_data($result) {
+
+		// Only insert the example data if no data already exists
+
+		$sql = '
+		SELECT
+			id
+		FROM
+			'.$this->tables['trends'].'
+		LIMIT
+			1';
+		$data_exists = $this->wpdb->get_var($sql);
+		if ($data_exists) {
+			return false;
+		}
+
+		// Insert example data
+
+		$rows = array(
+			array(
+//						'id' => 1,
+				'post_id' => 3,
+				'data' => "serializedataが入ります",
+				'created' => current_time( 'mysql' ),// WPで設定したローカル時間（'Y-m-d H:i:s'形式）
+				'modified' => current_time( 'mysql' ),
+			),
+		);
+		foreach($rows as $row) {
+			$this->wpdb->insert($this->tables['trends'], $row);
+		}
+
+
 	}
 
 	public function deactivate() {
@@ -87,14 +191,4 @@ class SnsTrend {
 	}
 
 }
-
-
-
-//Make Instance
-global $sns_trend;
-$sns_trend = new SnsTrend();
-//Register Activation Hook.
-register_activation_hook(__FILE__, array($sns_trend, "activate"));
-register_deactivation_hook(__FILE__, array($sns_trend, "deactivate"));
-
 ?>

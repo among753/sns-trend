@@ -9,10 +9,13 @@ Author URI: https://github.com/among753
 */
 
 
+define( 'SNS_TREND_ABSPATH', dirname( __FILE__ ) );
+
+
 //Load required files
-require_once dirname(__FILE__).DIRECTORY_SEPARATOR."sns_trend.class.php";
-//require_once dirname(__FILE__).DIRECTORY_SEPARATOR."widgets".DIRECTORY_SEPARATOR."popular.php";
-require_once dirname(__FILE__).DIRECTORY_SEPARATOR."functions.php";
+require_once SNS_TREND_ABSPATH . "/sns_trend.class.php";
+//require_once SNS_TREND_ABSPATH . "widgets".DIRECTORY_SEPARATOR."popular.php";
+require_once SNS_TREND_ABSPATH . "/functions.php";
 
 //Make Instance
 global $sns_trend;
