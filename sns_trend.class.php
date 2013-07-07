@@ -34,28 +34,20 @@ class SnsTrend {
 		// hook
 		//var_dump("うわああああああああ");
 
-		// カスタム投稿タイプ追加
-		add_action('init', array($this, 'book_type_register'), 0);
+		require_once SNS_TREND_ABSPATH . "/register_custom_post_type.class.php";
+		$custom_post_book = new RegisterCustomPostType();
+
 
 		// 管理メニューに追加するフック
-		add_action('admin_menu', 'mt_add_pages');
-		// 上のフックに対するaction関数
-		function mt_add_pages() {
-			// 設定メニュー下にサブメニューを追加:
-			add_options_page('Test Options', 'Test Options', 'administrator', 'testoptions', 'mt_options_page');
+		add_action('admin_menu', array(&$this, 'mt_add_pages'));
 
-			// 管理メニューにサブメニューを追加
-			add_management_page('Test Manage', 'Test Manage', 'administrator', 'testmanage', 'mt_manage_page');
+	}
 
-			// 新しいトップレベルメニューを追加(分からず屋):
-			add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', __FILE__, 'mt_toplevel_page');
 
-			// カスタムのトップレベルメニューにサブメニューを追加:
-			add_submenu_page(__FILE__, 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', 'mt_sublevel_page');
-
-			// カスタムのトップレベルメニューに二つ目のサブメニューを追加:
-			add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', 'mt_sublevel_page2');
-		}
+	/**
+	 * menu画面追加サンプル
+	 */
+	public function mt_add_pages() {
 
 		// mt_options_page() はTest Optionsサブメニューのページコンテンツを表示
 		function mt_options_page() {
@@ -78,37 +70,26 @@ class SnsTrend {
 			echo "<h2>Test Sublevel</h2>";
 		}
 
-// mt_sublevel_page2() はカスタムのトップレベルメニューの
-// 二番目のサブメニューを表示
+		// mt_sublevel_page2() はカスタムのトップレベルメニューの
+		// 二番目のサブメニューを表示
 		function mt_sublevel_page2() {
 			echo "<h2>Test Sublevel 2</h2>";
 		}
-	}
 
+		// 設定メニュー下にサブメニューを追加:
+		add_options_page('Test Options', 'Test Options', 'administrator', 'testoptions', 'mt_options_page');
 
-	/**
-	 * カスタム投稿タイプ追加
-	 */
-	protected function book_type_register() {
-		$main_label = '書籍';
-		$labels = array (
-			'name' => _x($main_label, 'books'),
-			'singular_name' => _x($main_label, 'book')
-		);
-		$args = array (
-			'labels' => $labels,
-			'public' => true,
-			'publicly_queryable' => true,
-			'show_ui' => true,
-			'query_var' => true,
-			'rewrite' => true,
-			'capability_type' => 'post',
-			'hierarchical' => false,
-			'menu_position' => 5,
-			'supports' => array ('title'),
-			'has_archive' => true
-		);
-		register_post_type('book', $args);
+		// 管理メニューにサブメニューを追加
+		add_management_page('Test Manage', 'Test Manage', 'administrator', 'testmanage', 'mt_manage_page');
+
+		// 新しいトップレベルメニューを追加(分からず屋):
+		add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', __FILE__, 'mt_toplevel_page');
+
+		// カスタムのトップレベルメニューにサブメニューを追加:
+		add_submenu_page(__FILE__, 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', 'mt_sublevel_page');
+
+		// カスタムのトップレベルメニューに二つ目のサブメニューを追加:
+		add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', 'mt_sublevel_page2');
 	}
 
 
