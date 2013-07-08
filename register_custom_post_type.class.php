@@ -16,7 +16,16 @@ class RegisterCustomPostType {
 	public function __construct() {
 		// カスタム投稿タイプ追加
 		add_action('init', array(&$this, 'register_post_type'));
-		
+
+
+		// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
+		add_action('save_post', /*array(&$this, 'save_post_type')*/'save_post_type');
+		function save_post_type($post_id){
+			echo $post_id;
+
+
+		}
+
 		
 		
 		/**
@@ -137,18 +146,19 @@ class RegisterCustomPostType {
 
 	}
 
+	/**
+	 * register_meta_box_cb
+	 */
 	public function register_meta_box_cb() {
 		add_meta_box($this->meta_name, 'キーワード', array(&$this, 'trends_meta_html'), $this->post_type);
-		
-		
-		
-		
-		
 	}
 
 	public function trends_meta_html() {
+
+		global $wpdb;
 		global $post;
-		$trends_keywords = get_post_custom_values($this->meta_name, $post->ID);
+		$trends_keywords = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE meta_key = %s AND post_id = %d", $this->meta_name, $post->ID ) );//meta_idを取得するならこっち
+
 		var_dump($trends_keywords);
 
 		//入力フィールドの表示
@@ -164,16 +174,16 @@ class RegisterCustomPostType {
 		<div id="trends-meta">
 			<table>
 			<?php if($trends_keywords) : ?>
-			<?php foreach($trends_keywords as $value) : ?>
+			<?php foreach($trends_keywords as $obj) : ?>
 				<tr>
 					<th>キーワード</th>
-					<td><input name="trends_keyword[]" class="trends-meta" id="trends_keyword" value="<?php echo $value; ?>"></td>
+					<td><input name="trends_keyword[<?php echo $obj->meta_id ?>]" class="trends-meta" id="trends_keyword" value="<?php echo $obj->meta_value; ?>"><input type="button" value="<?php _e('edit'); ?>" onclick="hoge(this.form.hogehoge);" /><input type="button" value="<?php _e('delete'); ?>" onclick="hoge(this.form.hogehoge);" /></td>
 				</tr>
 			<?php endforeach; ?>
 			<?php endif; ?>
 				<tr>
 					<th>キーワード</th>
-					<td><input name="trends_keyword[]" class="trends-meta" id="trends_keyword" value="新規入力欄"></td>
+					<td><input name="trends_keyword_input" class="trends-meta" id="trends_keyword" value="新規入力欄"><input type="button" value="<?php _e('insert'); ?>" onclick="hoge(this.form.hogehoge);" /></td>
 				</tr>
 			</table>
 		</div>
