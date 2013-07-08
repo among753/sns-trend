@@ -16,10 +16,86 @@ class RegisterCustomPostType {
 	public function __construct() {
 		// カスタム投稿タイプ追加
 		add_action('init', array(&$this, 'register_post_type'));
-
-		// カスタムフィールド入力ボックス追加
-		add_action('admin_init', array(&$this, 'add_meta_box'));
-
+		
+		
+		
+		/**
+		 * sackライブラリ設定
+		 */
+		add_action('admin_print_scripts', 'myplugin_js_admin_header' );
+		function myplugin_js_admin_header() // これはPHP関数
+		{
+			// JavascriptのSACKライブラリをAjaxに使用
+			wp_print_scripts( array( 'sack' ));
+				
+			// カスタムJavascript関数の定義
+			?>
+			<script type="text/javascript">
+			//<![CDATA[
+			function myplugin_ajax_elevation( lat_field, long_field, elev_field )
+			{
+			   var mysack = new sack(
+			       "<?php bloginfo( 'wpurl' ); ?>/wp-admin/admin-ajax.php" );
+			
+			  mysack.execute = 1;
+			  mysack.method = 'POST';
+			  mysack.setVar( "action", "myplugin_elev_lookup" );
+			  mysack.setVar( "latitude", lat_field.value );
+			  mysack.setVar( "longitude", long_field.value );
+			  mysack.setVar( "elev_field_id", elev_field.id );
+			  mysack.encVar( "cookie", document.cookie, false );
+			  mysack.onError = function() { alert('Ajax error in looking up elevation' )};
+			  mysack.runAJAX();
+			
+			  return true;
+			} // Javascript関数myplugin_ajax_elevation終わり
+			//]]>
+			</script>
+		<?php
+		} // PHP関数myplugin_js_admin_header終わり
+		
+		
+		/**
+		 * ajaxの返信を受け取る
+		 */
+		add_action('wp_ajax_myplugin_elev_lookup', 'myplugin_ajax_elev_lookup' );
+		function myplugin_ajax_elev_lookup()
+		{
+			// 送信された情報を格納
+		
+			$lat = $_POST['latitude'];
+			$long = $_POST['longitude'];
+			$field_id = $_POST['elev_field_id'];
+			$units = "FEET";
+		
+			// SnoopyによるURLリクエストを生成
+		
+			// 			require_once( ABSPATH . WPINC . '/class-snoopy.php' );
+			// 			$sno = new Snoopy();
+			// 			$sno->agent = 'WordPress/' . $wp_version;
+			// 			$sno->read_timeout = 2;
+			// 			$reqURL = "http://gisdata.usgs.gov/XMLWebServices/TNM_Elevation_Service.asmx/getElevation?Y_Value=$lat&X_Value=$long&Elevation_Units=$units&Source_Layer=-1&Elevation_Only=1";
+		
+			// 			// 高度調査サーバにリクエストを送信
+			// 			if( !$sno->fetchtext( $reqURL )) {
+			// 				die( "alert('高度調査ホストに接続できませんでした')" );
+			// 			}
+		
+			// 			// レスポンスを解析
+			// 			if( !preg_match("|<Elevation>([\d.-]+)</Elevation>|",$sno->results)){
+			// 				die( "alert('分析結果に高度は含まれていませんでした')" );
+			// 			}
+		
+			// 			$matches=preg_split( "|<Elevation>([\d.-]+)</Elevation>|",$sno->results); //正規表現のバグ: 情報は返します
+				
+		
+			// 戻り値としてJavascriptを生成
+			die( "document.getElementById('$field_id').value = '$lat$long'" );
+		} // myplugin_ajax_elev_lookup関数終わり
+		
+		
+		
+		
 		//add filter to insure the text Book, or book, is displayed when user updates a book
 		add_filter('post_updated_messages', array(&$this, 'filter_post_updated_message'));
 
@@ -54,14 +130,20 @@ class RegisterCustomPostType {
 			'capability_type' => 'post',
 			'hierarchical' => false,
 			'menu_position' => null,
-			'supports' => array('title','editor','author','thumbnail','excerpt','custom-fields','comments')
+			'supports' => array('title','editor','author','thumbnail','excerpt','custom-fields','comments'),
+			'register_meta_box_cb' => array(&$this, 'register_meta_box_cb')
 		);
 		register_post_type($this->post_type, $args);
 
 	}
 
-	public function add_meta_box() {
+	public function register_meta_box_cb() {
 		add_meta_box($this->meta_name, 'キーワード', array(&$this, 'trends_meta_html'), $this->post_type);
+		
+		
+		
+		
+		
 	}
 
 	public function trends_meta_html() {
@@ -95,6 +177,13 @@ class RegisterCustomPostType {
 				</tr>
 			</table>
 		</div>
+		
+		緯度: <input type="text" name="latitude_field" />
+		経度: <input type="text" name="longitude_field" />
+		<input type="button" value="Look Up Elevation" 
+		onclick="myplugin_ajax_elevation(this.form.latitude_field,this.form.longitude_field,this.form.elevation_field);" />
+		高度: <input type="text" name="elevation_field" id="elevation_field" />
+		
 	<?php
 	}
 
