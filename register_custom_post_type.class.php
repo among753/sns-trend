@@ -15,96 +15,23 @@ class RegisterCustomPostType {
 
 	public function __construct() {
 		// カスタム投稿タイプ追加
-		add_action('init', array(&$this, 'register_post_type'));
-
+		add_action('init', array(&$this, 'register_post_type'), 0);
+		// タクソノミー追加
+		add_action('init', array(&$this, 'register_taxonomy'), 1);
 
 		// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
-		add_action('save_post', /*array(&$this, 'save_post_type')*/'save_post_type');
-		function save_post_type($post_id){
-			echo $post_id;
+		// 保存時に実行する処理
+		add_action('save_post', array(&$this, 'save_post_type'));
 
+		// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
+		// #TODO カスタム投稿のみフックできないか
+		// AJAXのsackライブラリを<head>にセット
+		add_action('admin_print_scripts', array(&$this, 'myplugin_js_admin_header'));
 
-		}
+		// wp_ajax_*アクションを使うことで、リクエスト受信時にプラグインのどのPHP関数を呼び出すかをWordPressに通知することができます。
+		// admin-ajax.phpがリクエストを返してきたときに受ける
+		add_action('wp_ajax_myplugin_elev_lookup', array(&$this, 'myplugin_ajax_elev_lookup'));
 
-		
-		
-		/**
-		 * sackライブラリ設定
-		 */
-		add_action('admin_print_scripts', 'myplugin_js_admin_header' );
-		function myplugin_js_admin_header() // これはPHP関数
-		{
-			// JavascriptのSACKライブラリをAjaxに使用
-			wp_print_scripts( array( 'sack' ));
-				
-			// カスタムJavascript関数の定義
-			?>
-			<script type="text/javascript">
-			//<![CDATA[
-			function myplugin_ajax_elevation( lat_field, long_field, elev_field )
-			{
-			   var mysack = new sack(
-			       "<?php bloginfo( 'wpurl' ); ?>/wp-admin/admin-ajax.php" );
-			
-			  mysack.execute = 1;
-			  mysack.method = 'POST';
-			  mysack.setVar( "action", "myplugin_elev_lookup" );
-			  mysack.setVar( "latitude", lat_field.value );
-			  mysack.setVar( "longitude", long_field.value );
-			  mysack.setVar( "elev_field_id", elev_field.id );
-			  mysack.encVar( "cookie", document.cookie, false );
-			  mysack.onError = function() { alert('Ajax error in looking up elevation' )};
-			  mysack.runAJAX();
-			
-			  return true;
-			} // Javascript関数myplugin_ajax_elevation終わり
-			//]]>
-			</script>
-		<?php
-		} // PHP関数myplugin_js_admin_header終わり
-		
-		
-		/**
-		 * ajaxの返信を受け取る
-		 */
-		add_action('wp_ajax_myplugin_elev_lookup', 'myplugin_ajax_elev_lookup' );
-		function myplugin_ajax_elev_lookup()
-		{
-			// 送信された情報を格納
-		
-			$lat = $_POST['latitude'];
-			$long = $_POST['longitude'];
-			$field_id = $_POST['elev_field_id'];
-			$units = "FEET";
-		
-			// SnoopyによるURLリクエストを生成
-		
-			// 			require_once( ABSPATH . WPINC . '/class-snoopy.php' );
-			// 			$sno = new Snoopy();
-			// 			$sno->agent = 'WordPress/' . $wp_version;
-			// 			$sno->read_timeout = 2;
-			// 			$reqURL = "http://gisdata.usgs.gov/XMLWebServices/TNM_Elevation_Service.asmx/getElevation?Y_Value=$lat&X_Value=$long&Elevation_Units=$units&Source_Layer=-1&Elevation_Only=1";
-		
-			// 			// 高度調査サーバにリクエストを送信
-			// 			if( !$sno->fetchtext( $reqURL )) {
-			// 				die( "alert('高度調査ホストに接続できませんでした')" );
-			// 			}
-		
-			// 			// レスポンスを解析
-			// 			if( !preg_match("|<Elevation>([\d.-]+)</Elevation>|",$sno->results)){
-			// 				die( "alert('分析結果に高度は含まれていませんでした')" );
-			// 			}
-		
-			// 			$matches=preg_split( "|<Elevation>([\d.-]+)</Elevation>|",$sno->results); //正規表現のバグ: 情報は返します
-				
-		
-			// 戻り値としてJavascriptを生成
-			die( "document.getElementById('$field_id').value = '$lat$long'" );
-		} // myplugin_ajax_elev_lookup関数終わり
-		
-		
-		
-		
 		//add filter to insure the text Book, or book, is displayed when user updates a book
 		add_filter('post_updated_messages', array(&$this, 'filter_post_updated_message'));
 
@@ -113,8 +40,11 @@ class RegisterCustomPostType {
 
 	}
 
-	public function register_post_type()
-	{
+	/**
+	 * カスタム投稿タイプ登録
+	 */
+	public function register_post_type() {
+		// #TODO label
 		$labels = array(
 			'name' => _x('Books', 'post type general name'),
 			'singular_name' => _x('Book', 'post type singular name'),
@@ -128,7 +58,7 @@ class RegisterCustomPostType {
 			'not_found_in_trash' => __('No books found in Trash'),
 			'parent_item_colon' => ''
 		);
-		$args = array(
+		register_post_type($this->post_type, array(
 			'labels' => $labels,
 			'public' => true,
 			'publicly_queryable' => true,
@@ -141,9 +71,35 @@ class RegisterCustomPostType {
 			'menu_position' => null,
 			'supports' => array('title','editor','author','thumbnail','excerpt','custom-fields','comments'),
 			'register_meta_box_cb' => array(&$this, 'register_meta_box_cb')
-		);
-		register_post_type($this->post_type, $args);
+		));
+	}
 
+	/**
+	 * タクソノミー登録
+	 */
+	public function register_taxonomy() {
+		// #TODO Internationalization
+		$labels = array(
+			'name' => 'イベントカテゴリー',
+			'singular_name' => 'イベントカテゴリー',
+			'search_items' =>  'イベントを検索',
+			'popular_items' => 'よく使われているイベント',
+			'all_items' => 'すべてのイベント',
+			'parent_item' => null,
+			'parent_item_colon' => null,
+			'edit_item' => 'イベントカテゴリーの編集',
+			'update_item' => '更新',
+			'add_new_item' => '新規イベントカテゴリー',
+			'new_item_name' => '新しいイベントカテゴリー'
+		);
+		register_taxonomy('cate_'.$this->post_type, $this->post_type, array(
+			'label' => 'イベントカテゴリー',
+			'labels' => $labels,
+			'hierarchical' => true,
+			'show_ui' => true,
+			'query_var' => true,
+			'rewrite' => array( 'slug' => 'cate_'.$this->post_type ),
+		));
 	}
 
 	/**
@@ -196,6 +152,67 @@ class RegisterCustomPostType {
 		
 	<?php
 	}
+
+
+	/**
+	 * 投稿保存時
+	 *
+	 * @param $post_id
+	 */
+	public function save_post_type($post_id){
+		$test = $post_id;
+	}
+
+	/**
+	 * sackライブラリ設定
+	 */
+	public function myplugin_js_admin_header() {
+		// JavascriptのSACKライブラリをAjaxに使用
+		wp_print_scripts( array( 'sack' ));
+
+		// カスタムJavascript関数の定義
+		?>
+		<script type="text/javascript">
+			//<![CDATA[
+			function myplugin_ajax_elevation( lat_field, long_field, elev_field )
+			{
+				var mysack = new sack(
+					"<?php bloginfo( 'wpurl' ); ?>/wp-admin/admin-ajax.php" );
+
+				mysack.execute = 1;
+				mysack.method = 'POST';
+				mysack.setVar( "action", "myplugin_elev_lookup" );
+				mysack.setVar( "latitude", lat_field.value );
+				mysack.setVar( "longitude", long_field.value );
+				mysack.setVar( "elev_field_id", elev_field.id );
+				mysack.encVar( "cookie", document.cookie, false );
+				mysack.onError = function() { alert('Ajax error in looking up elevation' )};
+				mysack.runAJAX();
+
+				return true;
+			} // Javascript関数myplugin_ajax_elevation終わり
+			//]]>
+		</script>
+	<?php
+	}
+
+	/**
+	 * ajaxの返信を受け取る
+	 */
+	public function myplugin_ajax_elev_lookup() {
+		// 送信された情報を格納
+		$lat = $_POST['latitude'];
+		$long = $_POST['longitude'];
+		$field_id = $_POST['elev_field_id'];
+
+		// SnoopyによるURLリクエストを生成
+		// http://wpdocs.sourceforge.jp/AJAX_in_Plugins
+
+		// 戻り値としてJavascriptを生成
+		die( "document.getElementById('$field_id').value = '$lat$long'" );
+	}
+
+
 
 
 	/**
