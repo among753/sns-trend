@@ -188,14 +188,14 @@ class RegisterCustomPostType {
 		</style>
 		<div id="trends-meta">
 			<table>
-			<?php if($trends_keywords) : ?>
-			<?php foreach($trends_keywords as $obj) : ?>
-				<tr>
-					<th>キーワード</th>
-					<td><input name="trends_keyword[<?php echo $obj->meta_id ?>]" class="trends-meta" id="trends_keyword" value="<?php echo $obj->meta_value; ?>"><input type="button" value="<?php _e('edit'); ?>" onclick="hoge(this.form.hogehoge);" /><input type="button" value="<?php _e('delete'); ?>" onclick="hoge(this.form.hogehoge);" /></td>
-				</tr>
-			<?php endforeach; ?>
-			<?php endif; ?>
+				<?php if($trends_keywords) : ?>
+					<?php foreach($trends_keywords as $obj) : ?>
+						<tr>
+							<th>キーワード</th>
+							<td><input name="trends_keyword[<?php echo $obj->meta_id ?>]" class="trends-meta" id="trends_keyword" value="<?php echo $obj->meta_value; ?>"><input type="button" value="<?php _e('edit'); ?>" onclick="hoge(this.form.hogehoge);" /><input type="button" value="<?php _e('delete'); ?>" onclick="hoge(this.form.hogehoge);" /></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
 				<tr>
 					<th>キーワード</th>
 					<td>
@@ -205,13 +205,13 @@ class RegisterCustomPostType {
 				</tr>
 			</table>
 		</div>
-		
+
 		緯度: <input type="text" name="latitude_field" />
 		経度: <input type="text" name="longitude_field" />
-		<input type="button" value="Look Up Elevation" 
-		onclick="myplugin_ajax_elevation(this.form.latitude_field,this.form.longitude_field,this.form.elevation_field);" />
+		<input type="button" value="Look Up Elevation"
+		       onclick="myplugin_ajax_elevation(this.form.latitude_field,this.form.longitude_field,this.form.elevation_field);" />
 		高度: <input type="text" name="elevation_field" id="elevation_field" />
-		
+
 	<?php
 	}
 
