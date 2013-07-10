@@ -32,10 +32,11 @@ class SnsTrend {
 		);
 
 		// hook
-		//var_dump("うわああああああああ");
 
-		require_once SNS_TREND_ABSPATH . "/register_custom_post_type.class.php";
-		$custom_post_book = new RegisterCustomPostType();
+		require_once SNS_TREND_ABSPATH . "/custom_post_type_trend.class.php";
+		$trend = new CustomPostTypeTrend();
+		$trend->init();
+
 
 
 		// 管理メニューに追加するフック
@@ -75,6 +76,8 @@ class SnsTrend {
 		function mt_sublevel_page2() {
 			echo "<h2>Test Sublevel 2</h2>";
 		}
+
+
 
 		// 設定メニュー下にサブメニューを追加:
 		add_options_page('Test Options', 'Test Options', 'administrator', 'testoptions', 'mt_options_page');

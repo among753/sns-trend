@@ -7,14 +7,18 @@
  * To change this template use File | Settings | File Templates.
  */
 
-class RegisterCustomPostType {
+class CustomPostTypeTrend {
 
-	public $post_type = 'book';
+	public $post_type = 'trend';
 
 	public $meta_keyword = 'trends_keyword';
 	public $meta_keywords = 'trends_keywords';
 
 	public function __construct() {
+
+	}
+
+	public function init() {
 		// カスタム投稿タイプ追加
 		add_action('init', array(&$this, 'register_post_type'), 0);
 		// タクソノミー追加
@@ -23,8 +27,8 @@ class RegisterCustomPostType {
 		// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
 		// edit_post, save_post, wp_insert_post
 		// 保存時に実行する処理
-//	add_action('wp_insert_post', array(&$this, 'save_post_type'));
-		add_filter('wp_insert_post_data', array(&$this, 'save_post_type'), '99', 2);
+		add_action('wp_insert_post', array(&$this, 'save_post_type'));
+//		add_filter('wp_insert_post_data', array(&$this, 'save_post_type'), '99', 2);
 
 		// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
 		// #TODO カスタム投稿のみフックできないか
@@ -46,11 +50,17 @@ class RegisterCustomPostType {
 
 
 
-		//add filter to insure the text Book, or book, is displayed when user updates a book
+		//add filter to insure the text Trend, or brend, is displayed when user updates a brend
 		add_filter('post_updated_messages', array(&$this, 'filter_post_updated_message'));
 
-		//display contextual help for Books
+		//display contextual help for Trends
 		add_action( 'contextual_help', array(&$this, 'action_contextual_help'), 10, 3 );
+
+
+
+		require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
+		$twitter = new SnsTrendTwitter();
+		$twitter->init();
 
 	}
 
@@ -62,16 +72,16 @@ class RegisterCustomPostType {
 	public function register_post_type() {
 		// #TODO label
 		$labels = array(
-			'name' => _x('Books', 'post type general name'),
-			'singular_name' => _x('Book', 'post type singular name'),
-			'add_new' => _x('Add New', 'book'),
-			'add_new_item' => __('Add New Book'),
-			'edit_item' => __('Edit Book'),
-			'new_item' => __('New Book'),
-			'view_item' => __('View Book'),
-			'search_items' => __('Search Books'),
-			'not_found' =>  __('No books found'),
-			'not_found_in_trash' => __('No books found in Trash'),
+			'name' => _x('Trends', 'post type general name'),
+			'singular_name' => _x('Trend', 'post type singular name'),
+			'add_new' => _x('Add New', 'brend'),
+			'add_new_item' => __('Add New Trend'),
+			'edit_item' => __('Edit Trend'),
+			'new_item' => __('New Trend'),
+			'view_item' => __('View Trend'),
+			'search_items' => __('Search Trends'),
+			'not_found' =>  __('No brends found'),
+			'not_found_in_trash' => __('No brends found in Trash'),
 			'parent_item_colon' => ''
 		);
 		register_post_type($this->post_type, array(
@@ -141,22 +151,16 @@ class RegisterCustomPostType {
 	}
 
 	/**
-	 * 投稿保存時
+	 * 投稿保存の後、update_post_meta
 	 *
 	 * @param $post_id
 	 */
 	public function save_post_type($post_id){
 		//#TODO バリデートをwp_postを保存する前にやらなあかんかも。。
+		// バリデートは保留　JavaScriptでやる？
 
-
-		global $post;
-		/*
-		if (empty($post) || $post->post_type <> $this->post_type) return;
-		// $meta = get_post_meta($post_id, $this->meta_keywords, true);
-		$_POST['trends_keywords'];
-		if ( !add_post_meta($post_id, $this->meta_keywords, 'banana', true) ) update_post_meta($post_id, $this->meta_keywords, 'banana');
-		*/
-		return $post_id;
+		if (get_post_type() <> $this->post_type) return;
+		update_post_meta($post_id, $this->meta_keywords, $_POST['trends_keywords']);
 	}
 
 	/**
@@ -355,21 +359,21 @@ class RegisterCustomPostType {
 	public function filter_post_updated_message( $messages ) {
 		global $post, $post_ID;
 
-		$messages['book'] = array(
+		$messages['trend'] = array(
 			0 => '', // Unused. Messages start at index 1.
-			1 => sprintf( __('Book updated. <a href="%s">View book</a>'), esc_url( get_permalink($post_ID) ) ),
+			1 => sprintf( __('Trend updated. <a href="%s">View trend</a>'), esc_url( get_permalink($post_ID) ) ),
 			2 => __('Custom field updated.'),
 			3 => __('Custom field deleted.'),
-			4 => __('Book updated.'),
+			4 => __('Trend updated.'),
 			/* translators: %s: date and time of the revision */
-			5 => isset($_GET['revision']) ? sprintf( __('Book restored to revision from %s'), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
-			6 => sprintf( __('Book published. <a href="%s">View book</a>'), esc_url( get_permalink($post_ID) ) ),
-			7 => __('Book saved.'),
-			8 => sprintf( __('Book submitted. <a target="_blank" href="%s">Preview book</a>'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
-			9 => sprintf( __('Book scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview book</a>'),
+			5 => isset($_GET['revision']) ? sprintf( __('Trend restored to revision from %s'), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
+			6 => sprintf( __('Trend published. <a href="%s">View trend</a>'), esc_url( get_permalink($post_ID) ) ),
+			7 => __('Trend saved.'),
+			8 => sprintf( __('Trend submitted. <a target="_blank" href="%s">Preview trend</a>'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+			9 => sprintf( __('Trend scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview trend</a>'),
 				// translators: Publish box date format, see http://php.net/date
 				date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ), esc_url( get_permalink($post_ID) ) ),
-			10 => sprintf( __('Book draft updated. <a target="_blank" href="%s">Preview book</a>'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+			10 => sprintf( __('Trend draft updated. <a target="_blank" href="%s">Preview trend</a>'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
 		);
 
 		return $messages;
@@ -385,14 +389,14 @@ class RegisterCustomPostType {
 	 */
 	public function action_contextual_help($contextual_help, $screen_id, $screen) {
 		//$contextual_help .= var_dump($screen); // use this to help determine $screen->id
-		if ('book' == $screen->id ) {
+		if ('trend' == $screen->id ) {
 			$contextual_help =
-				'<p>' . __('Things to remember when adding or editing a book:') . '</p>' .
+				'<p>' . __('Things to remember when adding or editing a trend:') . '</p>' .
 				'<ul>' .
 				'<li>' . __('Specify the correct genre such as Mystery, or Historic.') . '</li>' .
-				'<li>' . __('Specify the correct writer of the book.  Remember that the Author module refers to you, the author of this book review.') . '</li>' .
+				'<li>' . __('Specify the correct writer of the trend.  Remember that the Author module refers to you, the author of this trend review.') . '</li>' .
 				'</ul>' .
-				'<p>' . __('If you want to schedule the book review to be published in the future:') . '</p>' .
+				'<p>' . __('If you want to schedule the trend review to be published in the future:') . '</p>' .
 				'<ul>' .
 				'<li>' . __('Under the Publish module, click on the Edit link next to Publish.') . '</li>' .
 				'<li>' . __('Change the date to the date to actual publish this article, then click on Ok.') . '</li>' .
@@ -400,9 +404,9 @@ class RegisterCustomPostType {
 				'<p><strong>' . __('For more information:') . '</strong></p>' .
 				'<p>' . __('<a href="http://codex.wordpress.org/Posts_Edit_SubPanel" target="_blank">Edit Posts Documentation</a>') . '</p>' .
 				'<p>' . __('<a href="http://wordpress.org/support/" target="_blank">Support Forums</a>') . '</p>' ;
-		} elseif ( 'edit-book' == $screen->id ) {
+		} elseif ( 'edit-trend' == $screen->id ) {
 			$contextual_help =
-				'<p>' . __('This is the help screen displaying the table of books blah blah blah.') . '</p>' ;
+				'<p>' . __('This is the help screen displaying the table of trends blah blah blah.') . '</p>' ;
 		}
 		return $contextual_help;
 	}
