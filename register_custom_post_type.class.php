@@ -11,7 +11,8 @@ class RegisterCustomPostType {
 
 	public $post_type = 'book';
 
-	public $meta_name = 'trends_keyword';
+	public $meta_keyword = 'trends_keyword';
+	public $meta_keywords = 'trends_keywords';
 
 	public function __construct() {
 		// カスタム投稿タイプ追加
@@ -20,76 +21,30 @@ class RegisterCustomPostType {
 		add_action('init', array(&$this, 'register_taxonomy'), 1);
 
 		// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
+		// edit_post, save_post, wp_insert_post
 		// 保存時に実行する処理
-		add_action('save_post', array(&$this, 'save_post_type'));
+//	add_action('wp_insert_post', array(&$this, 'save_post_type'));
+		add_filter('wp_insert_post_data', array(&$this, 'save_post_type'), '99', 2);
 
 		// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
 		// #TODO カスタム投稿のみフックできないか
+		// hooks: admin_print_scripts, admin_enqueue_scripts, admin_print_scripts-*(ex:widgets.php)
 		// sackライブラリでadmin-ajax.phpにAJAXでPOSTするJavaScript関数を<head>にセット
-		add_action('admin_print_scripts', array(&$this, 'myplugin_js_admin_header'));
+		add_action('admin_enqueue_scripts', array(&$this, 'myplugin_js_admin_header'));
 		// wp_ajax_*アクションを使うことで、リクエスト受信時にプラグインのどのPHP関数を呼び出すかをWordPressに通知することができます。
 		// wp_ajax_*(admin-ajax.phpがPOSTで受け取ったaction名)
 		add_action('wp_ajax_myplugin_elev_lookup', array(&$this, 'myplugin_ajax_elev_lookup'));
 
 
 		// admin-ajax.phpへリクエストを送信し返ってきた情報をもとにページ情報を出力
-		add_action( 'admin_print_scripts', 'sh_show_json' );
-		function sh_show_json() {
-			// jQuery
-			wp_print_scripts( array('jquery') );
-			?>
-			<script type="text/javascript">
-				//ajaxurl = '<?php echo admin_url( 'admin-ajax.php' ); ?>';// glocalで定義済み
-				jQuery(function($){
-					$("input[name='trends_keyword_button']").click(function(){
-						jQuery.ajax({
-							type: 'POST',
-							url: ajaxurl,
-							data: {
-								"action": "sh_get_json",
-								"fuga": "ふが",
-								"hoge": "ほげ"
-							},
-							success: function(data){
-								// php処理成功後
-								var json_str = JSON.stringify(data);
-								$('#json-data').append(json_str);
-								$("input[name='trends_keyword_button']").css({
-									'pointerEvents': 'auto',
-									'color': '#000'
-								});
-							},
-							error: function(){
-								alert('error');
-							}
-						});
-						// click後のJavaScript処理
-						$(this).css({
-							'pointerEvents': 'none',
-							'color': '#ccc'
-						});
-						return false;
-					});
-				});
-			</script>
-		<?php
-		}
-
+		// wp-admin/load-script.phpでjQuery本体読み込んでるのでそれより後
+		add_action( 'admin_head-post.php', array(&$this, 'sh_show_json'), 20 );
+		add_action( 'admin_head-post-new.php',  array(&$this, 'sh_show_json'), 20 );
 		// json出力
-		add_action( 'wp_ajax_sh_get_json', 'sh_get_json' );
-		//add_action( 'wp_ajax_nopriv_sh_get_json', 'sh_get_json' );// use front
-		function sh_get_json() {
-
-			//#TODO ここで$_POSTを受けてpost_metaを登録する
+		add_action( 'wp_ajax_sh_get_json', array(&$this, 'sh_get_json') );
+		//add_action( 'wp_ajax_nopriv_sh_get_json', array(&$this, 'sh_get_json') );// use front
 
 
-			$array = array( 'foo' => print_r($_POST, true), 'hoge' => $_POST['hoge'] );
-			$json = json_encode( $array );
-			nocache_headers();
-			header( "Content-Type: application/json; charset=" . get_bloginfo( 'charset' ) );
-			echo $json;
-			die();
-		}
 
 		//add filter to insure the text Book, or book, is displayed when user updates a book
 		add_filter('post_updated_messages', array(&$this, 'filter_post_updated_message'));
@@ -98,6 +53,8 @@ class RegisterCustomPostType {
 		add_action( 'contextual_help', array(&$this, 'action_contextual_help'), 10, 3 );
 
 	}
+
+
 
 	/**
 	 * カスタム投稿タイプ登録
@@ -165,56 +122,23 @@ class RegisterCustomPostType {
 	 * register_meta_box_cb
 	 */
 	public function register_meta_box_cb() {
-		add_meta_box($this->meta_name, 'キーワード', array(&$this, 'trends_meta_html'), $this->post_type);
+		add_meta_box($this->meta_keywords, 'キーワード', array(&$this, 'trends_meta_html'), $this->post_type);
+		add_meta_box($this->meta_keyword, 'キーワード(AJAX)', array(&$this, 'trends_meta_html_ajax'), $this->post_type);
 	}
 
 	public function trends_meta_html() {
-
-		global $wpdb;
-		global $post;
-		$trends_keywords = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE meta_key = %s AND post_id = %d", $this->meta_name, $post->ID ) );//meta_idを取得するならこっち
-
-		var_dump($trends_keywords);
+		global $wpdb, $post;
+		$trends_keywords = get_post_meta($post->ID, 'trends_keywords', true);
+		//var_dump($trends_keywords);
 
 		//入力フィールドの表示
 		?>
-		<input type="hidden" name="events-nonce" id="events-nonce" value="<?php echo wp_create_nonce( 'events-nonce' ) ?>" >
-		<style type="text/css">
-			#event-meta table th {
-				text-align: left;
-				font-weight: normal;
-				padding-right: 10px;
-			}
-		</style>
-		<div id="trends-meta">
-			<table>
-				<?php if($trends_keywords) : ?>
-					<?php foreach($trends_keywords as $obj) : ?>
-						<tr>
-							<th>キーワード</th>
-							<td><input name="trends_keyword[<?php echo $obj->meta_id ?>]" class="trends-meta" id="trends_keyword" value="<?php echo $obj->meta_value; ?>"><input type="button" value="<?php _e('edit'); ?>" onclick="hoge(this.form.hogehoge);" /><input type="button" value="<?php _e('delete'); ?>" onclick="hoge(this.form.hogehoge);" /></td>
-						</tr>
-					<?php endforeach; ?>
-				<?php endif; ?>
-				<tr>
-					<th>キーワード</th>
-					<td>
-						<input name="trends_keyword_input" class="trends-meta" id="trends_keyword" value="新規入力欄"><input name="trends_keyword_button" type="button" value="<?php _e('insert'); ?>" />
-						<div id="json-data"></div>
-					</td>
-				</tr>
-			</table>
+		<div id="trends_keywords">
+			<p><?php _e("キーワードを , 区切りで入力してください。"); ?></p>
+			<input type="text" name="trends_keywords" id="trends_keywords" value="<?php echo esc_attr(get_post_meta($post->ID, 'trends_keywords', true)); ?>" style="width: 96%;" />
 		</div>
-
-		緯度: <input type="text" name="latitude_field" />
-		経度: <input type="text" name="longitude_field" />
-		<input type="button" value="Look Up Elevation"
-		       onclick="myplugin_ajax_elevation(this.form.latitude_field,this.form.longitude_field,this.form.elevation_field);" />
-		高度: <input type="text" name="elevation_field" id="elevation_field" />
-
 	<?php
 	}
-
 
 	/**
 	 * 投稿保存時
@@ -222,8 +146,153 @@ class RegisterCustomPostType {
 	 * @param $post_id
 	 */
 	public function save_post_type($post_id){
-		$test = $post_id;
+		//#TODO バリデートをwp_postを保存する前にやらなあかんかも。。
+
+
+		global $post;
+		/*
+		if (empty($post) || $post->post_type <> $this->post_type) return;
+		// $meta = get_post_meta($post_id, $this->meta_keywords, true);
+		$_POST['trends_keywords'];
+		if ( !add_post_meta($post_id, $this->meta_keywords, 'banana', true) ) update_post_meta($post_id, $this->meta_keywords, 'banana');
+		*/
+		return $post_id;
 	}
+
+	/**
+	 * wp_postmetaをajaxで更新できるように（時間があれば実装）
+	 */
+	public function trends_meta_html_ajax() {
+		global $wpdb, $post;
+		//meta_idを取得するならこっち
+		$trends_keyword_arr = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $wpdb->postmeta WHERE meta_key = %s AND post_id = %d", $this->meta_keyword, $post->ID ) );
+		//var_dump($trends_keyword_arr);
+
+		//入力フィールドの表示
+		wp_nonce_field('trends_keyword-nonce','trends_keyword-nonce');
+		?>
+		<style type="text/css">
+			#trends_keyword-meta table th {
+				text-align: left;
+				font-weight: normal;
+				padding-right: 10px;
+			}
+		</style>
+		<div id="trends_keyword-meta">
+			<p>jQuery,ajax()使用</p>
+			<table>
+				<?php if($trends_keyword_arr) : ?>
+					<?php foreach($trends_keyword_arr as $obj) : ?>
+						<tr id="trends_keyword[<?php echo esc_attr($obj->meta_id); ?>]">
+							<th>キーワード</th>
+							<td>
+								<input type="text" name="trends_keyword[<?php echo esc_attr($obj->meta_id); ?>][value]" class="trends-meta" id="trends_keyword[<?php echo esc_attr($obj->meta_id); ?>][value]" value="<?php echo esc_attr($obj->meta_value); ?>">
+								<input type="button" naem="trends_keyword_edit" value="<?php _e('edit'); ?>" />
+								<input type="button" value="<?php _e('delete'); ?>" onclick="hoge(this.form.hogehoge);" /></td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif; ?>
+				<tr>
+					<th>キーワード</th>
+					<td>
+						<input type="text" name="trends_keyword[new]" class="trends-meta" id="trends_keyword" value="新規入力欄">
+						<input type="button" name="trends_keyword_button" value="<?php _e('insert'); ?>" class="button" />
+						<div id="json-data"></div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr>
+		<div>
+			<p>sackモジュール使用</p>
+			緯度: <input type="text" name="latitude_field" />
+			経度: <input type="text" name="longitude_field" />
+			<input type="button" value="Look Up Elevation"
+			       onclick="myplugin_ajax_elevation(this.form.latitude_field,this.form.longitude_field,this.form.elevation_field);" /><br>
+			高度: <input type="text" name="elevation_field" id="elevation_field" />
+		</div>
+	<?php
+	}
+
+
+
+	/**
+	 * admin-ajax.phpにPOSTを送る JavaScriptのfunctionを設置する。
+	 * admin-ajaxはPOSTを受けて wp_ajax_{$_POST['action']} のhookに設定されてるPHPのfunctionを実行する。
+	 * PHPのechoした結果は JavaScriptのfunction 内 $.ajax({…, success: function(data){}, …}) の data に帰ってくる。
+	 */
+	public function sh_show_json() {
+		global $post_type, $post;
+		if ($post_type !== $this->post_type) return;// 特定のpost_typeのみ
+
+		// jQueryを管理画面で読み込む
+		// wp_print_scripts( array('jquery') );// 依存関係無しに読み込むのでできれば使わない。
+		// wp_enqueue_script('jquery');// 読み込み順とか調整して読み込む。管理画面ではどうも効かない。jquery以外はいける。管理画面では load-scripts.php でjquery本体他を読み込んでる。
+		// ∴ jQuery読み込み後に設置するのでwp_print_scripts()で強制的にjQueryを読み込んで設置するか
+		// admin_head の一番最後 or admin_print_footer_scripts にhookして設置する。
+		?>
+		<script type="text/javascript">
+			//ajaxurl = '<?php echo admin_url( 'admin-ajax.php' ); ?>';// globalで定義済み
+			jQuery(function($){
+				$("input[name='trends_keyword_button']").click(function(){
+					$.ajax({
+						type: 'POST',
+						url: ajaxurl,
+						data: {
+							"action": "sh_get_json",// 'wp_ajax_sh_get_json'というhookにひっかけてある関数を実行するよう通知
+							"post_id" : "<?php echo esc_js($post->ID); ?>",
+							"meta_key" : "<?php echo esc_js($this->meta_keyword); ?>",
+							"meta_value" : $(this.form).find("input[name='trends_keyword\\[new\\]']").val(),
+							"trends_keyword-nonce" : $(this.form).find("input[name='trends_keyword-nonce']").val(),
+							"_wp_http_referer" : $(this.form).find("input[name='_wp_http_referer']").val()
+						},
+						success: function(data){
+							// php処理成功後
+							var json_str = JSON.stringify(data);
+							$('#json-data').append(json_str);
+							$("input[name='trends_keyword_button']").css({
+								'pointerEvents': 'auto',
+								'color': '#000'
+							});
+						},
+						error: function(){
+							alert('error');
+						}
+					});
+					// click後のJavaScript処理
+					$(this).css({
+						'pointerEvents': 'none',
+						'color': '#ccc'
+					});
+
+					return false;
+				});
+			});
+		</script>
+	<?php
+	}
+
+	public function sh_get_json() {
+		//#TODO ここで$_POSTを受けてpost_metaを登録する
+		if (! wp_verify_nonce($_POST['trends_keyword-nonce'], 'trends_keyword-nonce') ) die('Security check out');
+
+		//wp_specialchars_decode();
+		//html_entity_decode();
+
+
+		add_post_meta($_POST['post_id'], $_POST['meta_key'], $_POST['meta_value']);
+
+		$array = array( 'test' => esc_js(print_r($_POST, true)));
+		$json = json_encode( $array );
+		nocache_headers();
+		header( "Content-Type: application/json; charset=" . get_bloginfo( 'charset' ) );
+		//
+		//echo $json;
+		die($json);
+	}
+
+
+
 
 	/**
 	 * sackライブラリ設定
