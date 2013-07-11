@@ -7,26 +7,51 @@
  * To change this template use File | Settings | File Templates.
  */
 
-class SnsTrendMetaBox {
-	public $id ='';
-	public $title = '';
-	public $callback = '';
-	public $screen = null;
-	public $context = 'advanced';
-	public $priority = 'default';
-	public $callback_args = null;
 
-	public function __construct( $id, $title, $callback, $screen = null, $context = 'advanced', $priority = 'default', $callback_args = null ) {
-		$this->id =$id;
-		$this->title = $title;
-		$this->callback = $callback;
-		$this->screen = $screen;
-		$this->context = $context;
-		$this->priority = $priority;
-		$this->callback_args = $callback_args;
+/**
+ * Class SnsTrendMetaBox
+ *
+ */
+class SnsTrendMetaBox {
+	public $id            = '';// HTML 'id' attribute of the edit screen section
+	public $title         = '';// Title of the edit screen section, visible to user
+//	public $callback      = '';// Function that prints out the HTML for the edit screen section.
+	public $screen        = null;// ('post', 'page', 'link', or custom_post_type)
+	public $context       = 'advanced';// ('normal', 'advanced', or 'side')
+	public $priority      = 'default';// ('high', 'core', 'default' or 'low')
+	public $callback_args = null;// function $callback($post, $callback_args)
+
+	//#TODO ここにどんな入力フォームにするか設定する
+	public $args           = array('meta_key' => '');
+
+	public function __construct( $args ) {
+
+		$default = array(
+			'id'            => 'meta_box',
+			'title'         => '',
+			'param'         => array(
+				'meta_key'   => 'trends_keywords', // 登録するmeta_key
+				'input_type' => 'text', // form input type ('text' 'check' 'textbox' '')
+				'ajax'       => true // 保存にajaxを使うか
+			),
+			'callback'      => array($this, '_meta_html'),
+			'screen'        => null,
+			'context'       => 'advanced',
+			'priority'      => 'default',
+			'callback_args' => null
+		);
+		$args = array_merge($default, $args);
+		foreach ($args as $key => $value) {
+			$this->{$key} = $value;
+		}
+
+		$this->add_action();
 	}
 
 	public function add_action() {
+
+		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+
 		//#TODO add_action()はここで設定 ajax使うとか save使うとか
 		switch($this->id) {
 			case 'trends_keywords':
@@ -58,7 +83,15 @@ class SnsTrendMetaBox {
 	}
 
 	public function add_meta_box() {
-		add_meta_box( $this->id, $this->title, array($this, $this->callback), $this->screen, $this->context, $this->priority, $this->callback_args );
+		add_meta_box(
+			$this->id,
+			$this->title,
+			array($this, $this->callback),
+			$this->screen,
+			$this->context,
+			$this->priority,
+			$this->callback_args
+		);
 	}
 
 	/**

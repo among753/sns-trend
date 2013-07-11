@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by JetBrains PhpStorm.
- * User: KS
+ * User: among753
  * Date: 2013/07/08
  * Time: 0:56
  * To change this template use File | Settings | File Templates.
@@ -11,21 +11,12 @@ class CustomPostTypeTrend {
 
 	public $post_type = 'trend';
 
-	public $meta_keyword = 'trends_keyword';
-	public $meta_keywords = 'trends_keywords';
-
-	public $meta_box_keywords;
-	public $meta_box_keyword;
-
-	public function __construct() {
-		//#TODO Class:add_meta_box
-		require_once SNS_TREND_ABSPATH . "/sns_trend_meta_box.class.php";
-		$this->meta_box_keywords = new SnsTrendMetaBox($this->meta_keywords, 'キーワード', 'trends_meta_html', $this->post_type, 'advanced', 'default', null);
-		$this->meta_box_keyword = new SnsTrendMetaBox($this->meta_keyword, 'キーワード(AJAX)', 'trends_meta_html_ajax', $this->post_type, 'advanced', 'default', null);
-
+	public function __construct($post_type) {
+		$this->post_type = $post_type;
+		$this->add_actions();
 	}
 
-	public function init() {
+	public function add_actions() {
 		// カスタム投稿タイプ追加
 		add_action('init', array(&$this, 'register_post_type'), 0);
 		// タクソノミー追加
@@ -36,15 +27,6 @@ class CustomPostTypeTrend {
 		//display contextual help for Trends
 		add_action( 'contextual_help', array(&$this, 'action_contextual_help'), 10, 3 );
 
-		$this->meta_box_keywords->add_action();
-		$this->meta_box_keyword->add_action();
-
-
-
-		require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
-		$twitter = new SnsTrendTwitter();
-		$twitter->init();
-		//add_action('wp_insert_post', array($this, 'save_post_type'));
 	}
 
 	/**
@@ -111,27 +93,12 @@ class CustomPostTypeTrend {
 		);
 		register_taxonomy('cate_'.$this->post_type, $this->post_type, $args);
 	}
-	/**
-	 * 投稿保存の後、update_post_meta
-	 *
-	 * @param $post_id
-	 */
-	public function save_post_type($post_id){
-		//#TODO バリデートをwp_postを保存する前にやらなあかんかも。。
-		// バリデートは保留　JavaScriptでやる？
-		$aaa="a";
-		if (get_post_type() <> $this->post_type) return;
-		update_post_meta($post_id, $this->meta_keywords, $_POST[$this->meta_keywords]);
-	}
 
 	/**
 	 * register_meta_box_cb
 	 */
 	public function register_meta_box_cb() {
-		$this->meta_box_keywords->add_meta_box();
-		$this->meta_box_keyword->add_meta_box();
 	}
-
 
 	/**
 	 * filter: カスタム投稿のメッセージを変更

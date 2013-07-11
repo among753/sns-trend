@@ -34,9 +34,29 @@ class SnsTrend {
 		// hook
 
 		require_once SNS_TREND_ABSPATH . "/custom_post_type_trend.class.php";
-		$trend = new CustomPostTypeTrend();
-		$trend->init();
+		$trend = new CustomPostTypeTrend('trend');
 
+
+		require_once SNS_TREND_ABSPATH . "/sns_trend_meta_box.class.php";
+		$meta_box_keywords = new SnsTrendMetaBox(array(
+			'id'            => 'meta_keywords',
+			'title'         => 'キーワード',
+			'param'         => array(
+				'meta_key'   => 'trends_keywords', // 登録するmeta_key
+				'input_type' => 'text', // form input type ('text' 'check' 'textbox' '')
+				'ajax'       => true // 保存にajaxを使うか
+			),
+//			'callback'      => 'trends_meta_html',
+			'screen'        => $trend->post_type,
+//			'context'       => 'advanced',
+//			'priority'      => 'default',
+//			'callback_args' => null
+		));
+
+
+		require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
+		$twitter = new SnsTrendTwitter();
+		$twitter->init();
 
 
 		// 管理メニューに追加するフック
