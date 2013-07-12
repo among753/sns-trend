@@ -41,11 +41,15 @@ class SnsTrend {
 		$meta_box_keywords = new SnsTrendMetaBox(array(
 			'id'            => 'meta_keywords',
 			'title'         => 'キーワード',
-			'param'         => array(
+			'params'         => array(
 				'meta_key'   => 'trends_keywords', // 登録するmeta_key
 				'input_type' => 'text', // form input type ('text' 'check' 'textbox' '')
-				'ajax'       => true // 保存にajaxを使うか
+				'validate'   => array(
+					'length'  => 100,
+					'require' => true
+				),
 			),
+			'ajax'          => false, // 保存にajaxを使うか
 //			'callback'      => 'trends_meta_html',
 			'screen'        => $trend->post_type,
 //			'context'       => 'advanced',

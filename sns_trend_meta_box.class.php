@@ -14,88 +14,98 @@
  */
 class SnsTrendMetaBox {
 	public $id            = '';// HTML 'id' attribute of the edit screen section
-	public $title         = '';// Title of the edit screen section, visible to user
-//	public $callback      = '';// Function that prints out the HTML for the edit screen section.
+	public $title         = 'meta box';// Title of the edit screen section, visible to user
+	public $callback      = '';// Function that prints out the HTML for the edit screen section.
 	public $screen        = null;// ('post', 'page', 'link', or custom_post_type)
 	public $context       = 'advanced';// ('normal', 'advanced', or 'side')
 	public $priority      = 'default';// ('high', 'core', 'default' or 'low')
 	public $callback_args = null;// function $callback($post, $callback_args)
 
-	//#TODO ここにどんな入力フォームにするか設定する
-	public $args           = array('meta_key' => '');
+	public $ajax          = false; // 保存にajaxを使うか
+	public $params        = array(
+								'meta_key'   => null, // 登録するmeta_key
+								'input_type' => null, // form input type ('text' 'check' 'textarea' '')
+								'validate'   => array(
+									'length'  => 100,
+									'require' => true
+								),
+							);
 
 	public function __construct( $args ) {
-
-		$default = array(
-			'id'            => 'meta_box',
-			'title'         => '',
-			'param'         => array(
-				'meta_key'   => 'trends_keywords', // 登録するmeta_key
-				'input_type' => 'text', // form input type ('text' 'check' 'textbox' '')
-				'ajax'       => true // 保存にajaxを使うか
-			),
-			'callback'      => array($this, '_meta_html'),
-			'screen'        => null,
-			'context'       => 'advanced',
-			'priority'      => 'default',
-			'callback_args' => null
-		);
-		$args = array_merge($default, $args);
 		foreach ($args as $key => $value) {
-			$this->{$key} = $value;
+			if (isset($this->{$key}) || $key === 'screen' || $key === 'callback_args') {
+				$this->{$key} = $value;
+			}
 		}
 
-		$this->add_action();
-	}
+		// callback を設定
+		if (empty($this->callback)) {
+			$this->callback = array($this, "_default_callback_html");
+			$this->callback_args = $this->params;
+		}
 
-	public function add_action() {
+		// 保存アクションを設定
+		if ($this->ajax) {
+			// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
+			// #TODO カスタム投稿のみフックできないか
+			// hooks: admin_print_scripts, admin_enqueue_scripts, admin_print_scripts-*(ex:widgets.php)
+			// sackライブラリでadmin-ajax.phpにAJAXでPOSTするJavaScript関数を<head>にセット
+			add_action('admin_enqueue_scripts', array($this, 'myplugin_js_admin_header'));
+			// wp_ajax_*アクションを使うことで、リクエスト受信時にプラグインのどのPHP関数を呼び出すかをWordPressに通知することができます。
+			// wp_ajax_*(admin-ajax.phpがPOSTで受け取ったaction名)
+			add_action('wp_ajax_myplugin_elev_lookup', array($this, 'myplugin_ajax_elev_lookup'));
+
+			// admin-ajax.phpへリクエストを送信し返ってきた情報をもとにページ情報を出力
+			// wp-admin/load-script.phpでjQuery本体読み込んでるのでそれより後
+			add_action( 'admin_head-post.php', array($this, 'sh_show_json'), 20 );
+			add_action( 'admin_head-post-new.php',  array($this, 'sh_show_json'), 20 );
+			// json出力
+			add_action( 'wp_ajax_sh_get_json', array($this, 'sh_get_json') );
+			//add_action( 'wp_ajax_nopriv_sh_get_json', array(&$this, 'sh_get_json') );// use front
+		} else {
+			// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
+			// edit_post, save_post, wp_insert_post
+			// 保存時に実行する処理
+			add_action('wp_insert_post', array($this, 'save_post_type'));
+		}
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
-
-		//#TODO add_action()はここで設定 ajax使うとか save使うとか
-		switch($this->id) {
-			case 'trends_keywords':
-				// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
-				// edit_post, save_post, wp_insert_post
-				// 保存時に実行する処理
-				add_action('wp_insert_post', array($this, 'save_post_type'));
-				break;
-			case 'trends_keyword':
-				// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
-				// #TODO カスタム投稿のみフックできないか
-				// hooks: admin_print_scripts, admin_enqueue_scripts, admin_print_scripts-*(ex:widgets.php)
-				// sackライブラリでadmin-ajax.phpにAJAXでPOSTするJavaScript関数を<head>にセット
-				add_action('admin_enqueue_scripts', array($this, 'myplugin_js_admin_header'));
-				// wp_ajax_*アクションを使うことで、リクエスト受信時にプラグインのどのPHP関数を呼び出すかをWordPressに通知することができます。
-				// wp_ajax_*(admin-ajax.phpがPOSTで受け取ったaction名)
-				add_action('wp_ajax_myplugin_elev_lookup', array($this, 'myplugin_ajax_elev_lookup'));
-
-				// admin-ajax.phpへリクエストを送信し返ってきた情報をもとにページ情報を出力
-				// wp-admin/load-script.phpでjQuery本体読み込んでるのでそれより後
-				add_action( 'admin_head-post.php', array($this, 'sh_show_json'), 20 );
-				add_action( 'admin_head-post-new.php',  array($this, 'sh_show_json'), 20 );
-				// json出力
-				add_action( 'wp_ajax_sh_get_json', array($this, 'sh_get_json') );
-				//add_action( 'wp_ajax_nopriv_sh_get_json', array(&$this, 'sh_get_json') );// use front
-				break;
-		}
-
 	}
 
 	public function add_meta_box() {
-		add_meta_box(
-			$this->id,
-			$this->title,
-			array($this, $this->callback),
-			$this->screen,
-			$this->context,
-			$this->priority,
-			$this->callback_args
-		);
+		add_meta_box($this->id, $this->title, $this->callback, $this->screen, $this->context, $this->priority, $this->callback_args);
 	}
 
 	/**
+	 * callbackが指定なしの場合使用するdefault callback function
 	 * add_meta_boxのcallbackで呼ばれる
+	 */
+	public function _default_callback_html($post, $metabox) {
+		//#TODO
+		var_dump($post);
+		var_dump($metabox);
+
+		$params = $metabox['args'];
+
+		//$paramsをpurseしてinputボックスを出力
+
+		// $paramsが足りない時の処理
+		if (empty($params)) {
+			_e("パラムないです。");
+			return;
+		}
+		?>
+		<div id="trends_keywords">
+			<p><?php _e("キーワードを , 区切りで入力してください。"); ?></p>
+			<input type="text" name="trends_keywords" id="trends_keywords" value="<?php esc_attr_e(get_post_meta($post->ID, 'trends_keywords', true)); ?>" style="width: 96%;" />
+		</div>
+
+
+		<?php
+	}
+
+	/**
+	 *
 	 *
 	 */
 	public function trends_meta_html() {
