@@ -8,6 +8,7 @@ Version: 0.1.0
 Author URI: https://github.com/among753
 */
 
+namespace SnsTrend;
 
 define( 'SNS_TREND_ABSPATH', dirname( __FILE__ ) );
 

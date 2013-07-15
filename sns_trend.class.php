@@ -1,5 +1,8 @@
 <?php
 
+namespace SnsTrend;
+
+
 /**
  * Class SnsTrend
  */
@@ -33,11 +36,16 @@ class SnsTrend {
 
 		// hook
 
-		require_once SNS_TREND_ABSPATH . "/custom_post_type_trend.class.php";
-		$trend = new CustomPostTypeTrend('trend');
+		if(!class_exists('CustomPostType')){
+			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
+		}
+		$trend = new CustomPostType('trend');
 
 
-		require_once SNS_TREND_ABSPATH . "/sns_trend_meta_box.class.php";
+		if(!class_exists('MetaBox')){
+			require_once SNS_TREND_ABSPATH . "/meta_box.class.php";
+		}
+
 		$params = array(
 			array(
 				'meta_key'   => 'trend_keywords',
@@ -73,7 +81,7 @@ class SnsTrend {
 				'ajax'          => false, // 保存にajaxを使うか
 			),
 		);
-		$meta_box_keywords = new SnsTrendMetaBox(array(
+		$meta_box = new MetaBox(array(
 			'id'            => 'meta_keywords',
 			'title'         => _x('キーワード', 'word hosoku'),
 			'params'         => $params,
@@ -85,8 +93,12 @@ class SnsTrend {
 		));
 
 
-		require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
-		$twitter = new SnsTrendTwitter();
+
+		if(!class_exists('SnsTrendListTable')){
+			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";
+		}
+
+		$twitter = new SnsTrendData();
 		$twitter->init();
 
 

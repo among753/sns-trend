@@ -7,12 +7,13 @@
  * To change this template use File | Settings | File Templates.
  */
 
+namespace SnsTrend;
 
 /**
  * Class SnsTrendMetaBox
  *
  */
-class SnsTrendMetaBox {
+class MetaBox {
 	public $id            = '';// HTML 'id' attribute of the edit screen section
 	public $title         = 'meta box';// Title of the edit screen section, visible to user
 	public $callback      = '';// Function that prints out the HTML for the edit screen section.
@@ -196,7 +197,7 @@ class SnsTrendMetaBox {
 	 * @param $post_id
 	 * @param $post
 	 */
-	public function save_post_type($post_id, $post){
+	public function save_post_type($post_id){
 		if (get_post_type() <> $this->screen) return;// 特定のpost_typeのみ
 		foreach ($this->params as $param) {
 			if (!$param['ajax']) {

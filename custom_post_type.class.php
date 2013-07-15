@@ -7,7 +7,9 @@
  * To change this template use File | Settings | File Templates.
  */
 
-class CustomPostTypeTrend {
+namespace SnsTrend;
+
+class CustomPostType {
 
 	public $post_type = 'trend';
 
@@ -160,6 +162,7 @@ class CustomPostTypeTrend {
 		}
 		return $contextual_help;
 	}
+
 
 
 }
