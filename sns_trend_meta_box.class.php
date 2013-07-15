@@ -21,59 +21,99 @@ class SnsTrendMetaBox {
 	public $priority      = 'default';// ('high', 'core', 'default' or 'low')
 	public $callback_args = null;// function $callback($post, $callback_args)
 
-	public $ajax          = false; // 保存にajaxを使うか
-	public $params        = array(
-								'meta_key'   => null, // 登録するmeta_key
-								'input_type' => null, // form input type ('text' 'check' 'textarea' '')
-								'validate'   => array(
-									'length'  => 100,
-									'require' => true
+	public $params = '';
+	public $params_default = array(
+								'meta_key'    => null, // 登録するmeta_key
+								'input_type'  => null, // form input type ('text', 'check', 'radio', 'textarea' 'select')
+								'input_value' => '',
+								'description' => '',
+								'validate'    => array(
+										//'length'  => 100,
+										//'require' => true
 								),
+								'ajax'        => false, // 保存にajaxを使うか
 							);
 
 	public function __construct( $args ) {
+		// to propaty
 		foreach ($args as $key => $value) {
 			if (isset($this->{$key}) || $key === 'screen' || $key === 'callback_args') {
 				$this->{$key} = $value;
 			}
 		}
 
+		// foreachで回せるように
+		if (empty($this->params[0]['meta_key']))
+			$this->params = array($this->params);
+
 		// callback を設定
 		if (empty($this->callback)) {
-			$this->callback = array($this, "_default_callback_html");
-			$this->callback_args = $this->params;
+			if (empty($this->params[0])) {
+				$this->callback = array($this, "_null_callback_html");
+			} else {
+				$this->callback = array($this, "_default_callback_html");
+			}
+			$this->callback_args = &$this->params;
 		}
 
-		// 保存アクションを設定
-		if ($this->ajax) {
-			// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
-			// #TODO カスタム投稿のみフックできないか
-			// hooks: admin_print_scripts, admin_enqueue_scripts, admin_print_scripts-*(ex:widgets.php)
-			// sackライブラリでadmin-ajax.phpにAJAXでPOSTするJavaScript関数を<head>にセット
-			add_action('admin_enqueue_scripts', array($this, 'myplugin_js_admin_header'));
-			// wp_ajax_*アクションを使うことで、リクエスト受信時にプラグインのどのPHP関数を呼び出すかをWordPressに通知することができます。
-			// wp_ajax_*(admin-ajax.phpがPOSTで受け取ったaction名)
-			add_action('wp_ajax_myplugin_elev_lookup', array($this, 'myplugin_ajax_elev_lookup'));
+		foreach ($this->params as &$param) {
+			// $paramのdefaultへの初期化をする
+			$param = array_merge($this->params_default, $param);
 
-			// admin-ajax.phpへリクエストを送信し返ってきた情報をもとにページ情報を出力
-			// wp-admin/load-script.phpでjQuery本体読み込んでるのでそれより後
-			add_action( 'admin_head-post.php', array($this, 'sh_show_json'), 20 );
-			add_action( 'admin_head-post-new.php',  array($this, 'sh_show_json'), 20 );
-			// json出力
-			add_action( 'wp_ajax_sh_get_json', array($this, 'sh_get_json') );
-			//add_action( 'wp_ajax_nopriv_sh_get_json', array(&$this, 'sh_get_json') );// use front
-		} else {
-			// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
-			// edit_post, save_post, wp_insert_post
-			// 保存時に実行する処理
-			add_action('wp_insert_post', array($this, 'save_post_type'));
+			// 保存（validate）の登録
+			if ($param['ajax']) {
+				// 管理画面各ページの <head> 要素に JavaScript を追加するために実行する。
+				// #TODO カスタム投稿のみフックできないか
+				// hooks: admin_print_scripts, admin_enqueue_scripts, admin_print_scripts-*(ex:widgets.php)
+				// sackライブラリでadmin-ajax.phpにAJAXでPOSTするJavaScript関数を<head>にセット
+				add_action('admin_enqueue_scripts', array($this, 'myplugin_js_admin_header'));
+				// wp_ajax_*アクションを使うことで、リクエスト受信時にプラグインのどのPHP関数を呼び出すかをWordPressに通知することができます。
+				// wp_ajax_*(admin-ajax.phpがPOSTで受け取ったaction名)
+				add_action('wp_ajax_myplugin_elev_lookup', array($this, 'myplugin_ajax_elev_lookup'));
+
+				// admin-ajax.phpへリクエストを送信し返ってきた情報をもとにページ情報を出力
+				// wp-admin/load-script.phpでjQuery本体読み込んでるのでそれより後
+				add_action( 'admin_head-post.php', array($this, 'sh_show_json'), 20 );
+				add_action( 'admin_head-post-new.php',  array($this, 'sh_show_json'), 20 );
+				// json出力
+				add_action( 'wp_ajax_sh_get_json', array($this, 'sh_get_json') );
+				//add_action( 'wp_ajax_nopriv_sh_get_json', array(&$this, 'sh_get_json') );// use front
+
+			} else {
+				// 'publish_'.$this->post_type カスタム投稿タイプが更新、公開された時
+				// edit_post, save_post, wp_insert_post
+				// 保存時に実行する処理
+				add_action('wp_insert_post', array($this, 'save_post_type'));
+
+				// JavaScriptバリデート
+				add_action( 'admin_head-post.php', array($this, 'save_validation'), 20 );
+				add_action( 'admin_head-post-new.php',  array($this, 'save_validation'), 20 );
+
+			}
+
 		}
+		unset($param);
 
+		// meta box
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 	}
 
 	public function add_meta_box() {
 		add_meta_box($this->id, $this->title, $this->callback, $this->screen, $this->context, $this->priority, $this->callback_args);
+	}
+
+
+	/**
+	 * 設定値が無い場合 class の説明を表示
+	 */
+	public function _null_callback_html($post, $metabox) {
+		// $paramsが無い or 足りない時はclassの説明を表示
+		?>
+		<h4><?php _e("class SnsTrendMetaBoxの説明"); ?></h4>
+		<p>
+			class SnsTrendMetaBoxとは...
+		</p>
+		<?php
 	}
 
 	/**
@@ -82,58 +122,176 @@ class SnsTrendMetaBox {
 	 */
 	public function _default_callback_html($post, $metabox) {
 		//#TODO
-		var_dump($post);
-		var_dump($metabox);
+		//var_dump($post);
+		//var_dump($metabox);
 
 		$params = $metabox['args'];
+		foreach ($params as $param) {
+			//$paramsをpurseしてinputボックスを出力
+			$meta_values = get_post_meta($post->ID, $param['meta_key']);
+			if (is_string($param['input_value'])) $param['input_value'] = array($param['input_value']);
 
-		//$paramsをpurseしてinputボックスを出力
+			?>
+			<div id="<?php esc_attr_e($param['meta_key'] . "_field"); ?>">
+				<p><?php esc_html_e($param['description']); ?></p>
+				<div id="<?php esc_attr_e($param['meta_key'].'_errmsg'); ?>" style="display: none;"></div>
 
-		// $paramsが足りない時の処理
-		if (empty($params)) {
-			_e("パラムないです。");
-			return;
+				<?php
+				switch ( $param['input_type'] ) {
+					case 'text':
+						//#TODO metaが複数の時の処理
+						$meta_value = array_pop($meta_values);
+						if (!$meta_value) $meta_value = $param['input_value'][0];
+						?>
+
+						<label for="<?php esc_attr_e($param['meta_key']); ?>"><?php esc_html_e($param['meta_key']); ?> ：</label>
+						<input type="text" name="<?php esc_attr_e($param['meta_key']); ?>" id="<?php esc_attr_e($param['meta_key']); ?>" value="<?php esc_attr_e($meta_value); ?>" style="width: 100%;" />
+
+						<?php
+						break;
+					case 'checkbox':
+
+
+						foreach ($param['input_value'] as $key => $value) {
+							?>
+							<input type="checkbox" name="<?php esc_attr_e($param['meta_key']. "[]"); ?>" value="<?php esc_attr_e($value); ?>" id="<?php esc_attr_e($param['meta_key'].'_'.$key);?>" <?php if ( in_array($value, $meta_values) ) echo 'checked="checked"'; ?> />
+							<label for="<?php esc_attr_e($param['meta_key'].'_'.$key);?>"><?php esc_html_e($value); ?></label>
+
+
+							<?php
+						}
+						break;
+					case 'radio':
+						$meta_value = array_pop($meta_values);
+						if (!$meta_value) $meta_value = $param['input_value'][0];
+						foreach ($param['input_value'] as $key => $value) {
+							?>
+							<input type="radio" name="<?php esc_attr_e($param['meta_key']); ?>" value="<?php esc_attr_e($value); ?>" id="<?php esc_attr_e($param['meta_key'].'_'.$key);?>" <?php if ($meta_value == $value) echo 'checked="checked"'; ?> />
+							<label for="<?php esc_attr_e($param['meta_key'].'_'.$key);?>"><?php esc_html_e($value); ?></label>
+							<?php
+						}
+						break;
+					default :
+						break;
+				}
+				?>
+
+				<?php if ($param['ajax']) : ?>
+					<div id="json-data"></div>
+					<input type="button" name="<?php esc_attr_e('ajax-save-'.$param['meta_key']); ?>" value="<?php _e('save'); ?>" class="button" />
+				<?php endif; ?>
+
+
+
+			</div>
+			<?php
+
 		}
-		?>
-		<div id="trends_keywords">
-			<p><?php _e("キーワードを , 区切りで入力してください。"); ?></p>
-			<input type="text" name="trends_keywords" id="trends_keywords" value="<?php esc_attr_e(get_post_meta($post->ID, 'trends_keywords', true)); ?>" style="width: 96%;" />
-		</div>
-
-
-		<?php
 	}
 
-	/**
-	 *
-	 *
-	 */
-	public function trends_meta_html() {
-		global $wpdb, $post;
-		$trends_keywords = get_post_meta($post->ID, 'trends_keywords', true);
-		//var_dump($trends_keywords);
-
-		//入力フィールドの表示
-		?>
-		<div id="trends_keywords">
-			<p><?php _e("キーワードを , 区切りで入力してください。"); ?></p>
-			<input type="text" name="trends_keywords" id="trends_keywords" value="<?php echo esc_attr(get_post_meta($post->ID, 'trends_keywords', true)); ?>" style="width: 96%;" />
-		</div>
-	<?php
-	}
 
 	/**
 	 * 投稿保存の後、update_post_meta
 	 *
 	 * @param $post_id
+	 * @param $post
 	 */
-	public function save_post_type($post_id){
-		//#TODO バリデートをwp_postを保存する前にやらなあかんかも。。
-		// バリデートは保留　JavaScriptでやる？
-		if (get_post_type() <> $this->screen) return;
-		update_post_meta($post_id, $this->id, $_POST[$this->id]);
+	public function save_post_type($post_id, $post){
+		if (get_post_type() <> $this->screen) return;// 特定のpost_typeのみ
+		foreach ($this->params as $param) {
+			if (!$param['ajax']) {
+				//
+				switch ($param['input_type']) {
+					case 'checkbox':
+						delete_post_meta( $post_id, esc_attr($param['meta_key']));
+						if (isset($_POST[$param['meta_key']])) {
+							foreach ($_POST[$param['meta_key']] as $value) {
+								add_post_meta($post_id, esc_attr($param['meta_key']), esc_attr($value) );
+							}
+						}
+						break;
+					case 'text':
+					default:
+						if (isset($_POST[$param['meta_key']])) {
+							update_post_meta($post_id, esc_attr($param['meta_key']), esc_attr($_POST[$param['meta_key']]));
+						}
+						break;
+				}
+			}
+
+		}
+
 	}
 
+	/**
+	 *
+	 */
+	public function save_validation() {
+		global $post_type, $post;
+		if (get_post_type() <> $this->screen) return;// 特定のpost_typeのみ
+
+		$js_str = '';
+		foreach ($this->params as $param) {
+			if (empty($param['ajax']) && $param['validate']) {
+
+				$validate = $param['validate'];
+				switch ($param['input_type']) {
+					case 'checkbox':
+						break;
+					case 'text':
+						if ($validate['length']) {
+							$js_str .= sprintf(
+								"
+								if ( $(\"input[name='%s']\").val().length > %d ) {
+									errors += \"<p>ながすぎます</p>\";
+								}
+								",
+								esc_js($param['meta_key']),
+								$validate['length']
+							);
+						}
+						if ($validate['require']) {
+							$js_str .= sprintf(
+								"
+								if ($(\"input[name='%s']\").val() == '') {
+									errors += \"<p>からです。</p>\";
+								}
+								",
+								esc_js($param['meta_key'])
+							);
+						}
+						break;
+					default:
+						break;
+				}
+
+			}
+		}
+
+		// jQueryを管理画面で読み込む
+		?>
+		<script type="text/javascript">
+			jQuery(function($){
+				$("form").submit(function() {
+					var errors = '';
+
+					<?php echo $js_str; ?>
+
+
+					if (errors) {
+						$("#trends_keywords_errmsg").addClass("error").html(errors).show();
+						$("input[name='save']").removeClass("button-primary-disabled");
+						$("span.spinner").css("display", "none");
+						return false;
+					} else {
+						return true;
+					}
+
+				});
+			});
+		</script>
+	<?php
+	}
 
 	/**
 	 * add_meta_boxのcallbackで呼ばれる

@@ -38,23 +38,50 @@ class SnsTrend {
 
 
 		require_once SNS_TREND_ABSPATH . "/sns_trend_meta_box.class.php";
-		$meta_box_keywords = new SnsTrendMetaBox(array(
-			'id'            => 'meta_keywords',
-			'title'         => 'キーワード',
-			'params'         => array(
-				'meta_key'   => 'trends_keywords', // 登録するmeta_key
-				'input_type' => 'text', // form input type ('text' 'check' 'textbox' '')
+		$params = array(
+			array(
+				'meta_key'   => 'trend_keywords',
+				'input_type' => 'text',
+				'input_value' => 'らーめん',
+				'description' => __("検索ワードを入力してください。"),
 				'validate'   => array(
 					'length'  => 100,
 					'require' => true
 				),
+//				'ajax'          => false, // 保存にajaxを使うか
 			),
-			'ajax'          => false, // 保存にajaxを使うか
+			array(
+				'meta_key'   => 'radio_test',
+				'input_type' => 'radio',
+				'input_value' => array('ra-menn',"afdsfasd","あああああ"),
+				'description' => __("検索ワードを選んでください。"),
+				'validate'   => array(
+					'length'  => 100,
+					'require' => true
+				),
+				'ajax'          => false, // 保存にajaxを使うか
+			),
+			array(
+				'meta_key'   => 'checkbox_test',
+				'input_type' => 'checkbox',
+				'input_value' => array('wattu',"bbbb","あああああいいい"),
+				'description' => __("検索ワードを選んでください。（複数可）"),
+				'validate'   => array(
+					'length'  => 100,
+					'require' => true
+				),
+				'ajax'          => false, // 保存にajaxを使うか
+			),
+		);
+		$meta_box_keywords = new SnsTrendMetaBox(array(
+			'id'            => 'meta_keywords',
+			'title'         => _x('キーワード', 'word hosoku'),
+			'params'         => $params,
 //			'callback'      => 'trends_meta_html',
 			'screen'        => $trend->post_type,
-//			'context'       => 'advanced',
-//			'priority'      => 'default',
-//			'callback_args' => null
+			'context'       => 'advanced',
+			'priority'      => 'default',
+			'callback_args' => null
 		));
 
 
