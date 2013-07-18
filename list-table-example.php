@@ -33,8 +33,6 @@ License: GPL2
  * ========================================================================== */
 
 
-namespace SnsTrend;
-
 
 /*************************** LOAD THE BASE CLASS *******************************
  *******************************************************************************
@@ -61,7 +59,7 @@ if(!class_exists('WP_List_Table')){
  *
  * Our theme for this list table is going to be movies.
  */
-class TT_Example_List_Table extends \WP_List_Table {
+class TT_Example_List_Table extends WP_List_Table {
 
     /** ************************************************************************
      * Normally we would be querying data from a database and manipulating that
@@ -379,7 +377,7 @@ class TT_Example_List_Table extends \WP_List_Table {
             $result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
             return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
         }
-        usort($data, 'SnsTrend\usort_reorder');
+        usort($data, 'usort_reorder');
 
 
         /***********************************************************************

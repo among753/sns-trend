@@ -9,6 +9,7 @@
 
 namespace SnsTrend;
 
+
 /**
  * Class SnsTrendMetaBox
  *

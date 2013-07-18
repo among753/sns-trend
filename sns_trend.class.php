@@ -98,8 +98,8 @@ class SnsTrend {
 			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";
 		}
 
-		$twitter = new SnsTrendData();
-		$twitter->init();
+		$trend_data = new SnsTrendData();
+		$trend_data->init();
 
 
 		// 管理メニューに追加するフック

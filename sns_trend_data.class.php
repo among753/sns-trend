@@ -18,6 +18,15 @@ class SnsTrendData {
 
 	public function __construct() {
 
+
+		if(!class_exists('TT_Example_List_Table')){
+			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
+		}
+		if(!class_exists('SnsTrendListTable')){
+			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
+		}
+
+
 	}
 
 	public function init() {
@@ -34,32 +43,26 @@ class SnsTrendData {
 	public function render_trend_data_list() {
 		//#TODO データの一覧を出力
 
-		if(!class_exists('SnsTrendListTable')){
-			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
-		}
 		$sns_trend_list_table = new SnsTrendListTable();
-
-
-		if(!class_exists('TT_Example_List_Table')){
-			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
-		}
-		$TT_Example_List_Table = new TT_Example_List_Table();
-		$TT_Example_List_Table->prepare_items();
+		$sns_trend_list_table->prepare_items();
 
 		global $title;
 		?>
 		<div class="wrap">
+			<div id="icon-edit" class="icon32"><br/></div>
 			<h2>
 				<?php esc_html_e($title); ?>
-
 			</h2>
-			<?php
-			//Table of elements
-			$TT_Example_List_Table->display();
-			?>
+			<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
+			<form id="movies-filter" method="get">
+				<!-- For plugins, we also need to ensure that the form posts back to our current page -->
+				<input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
+				<!-- Now we can render the completed list table -->
+				<?php $sns_trend_list_table->display() ?>
+
+			</form>
 		</div>
 		<?php
 	}
 
 }
-
