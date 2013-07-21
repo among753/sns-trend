@@ -14,24 +14,44 @@ namespace SnsTrend;
 
 
 class SnsTrendData {
-	public $aaa="aaa";
+
+	public $data = array();
 
 	public function __construct() {
 
 
-		if(!class_exists('TT_Example_List_Table')){
+		if (!class_exists('TT_Example_List_Table'))
 			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
-		}
-		if(!class_exists('SnsTrendListTable')){
+
+		if (!class_exists('SnsTrendListTable'))
 			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
-		}
 
+		if (!class_exists('SnsTrendTwitter'))
+			require_once( SNS_TREND_ABSPATH . '/sns_trend_twitter.class.php' );
 
+		$this->init();
 	}
 
 	public function init() {
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array(&$this, 'mt_add_pages'));
+
+		//#TODO action==get
+		if (isset($_REQUEST['action'])) {
+			var_dump($_REQUEST);
+			switch ($_REQUEST['action']) {
+				case 'get':
+					//#TODO nonce check
+					//#TODO twitter class ajaxでの呼び出しを考慮して作る
+					$sns_trend_twitter = new SnsTrendTwitter();
+					$this->data = $sns_trend_twitter->search('うわあああ');
+
+					break;
+				default :
+					break;
+			}
+		}
+
 	}
 
 	public function mt_add_pages() {
@@ -41,8 +61,20 @@ class SnsTrendData {
 	}
 
 	public function render_trend_data_list() {
-		//#TODO データの一覧を出力
 
+		//var_dump($this->data);
+		foreach($this->data->statuses as $status){
+			$text = \Twitter_Autolink::create($status->text)
+				->setNoFollow(false)
+				->addLinks();
+			echo '<li>';
+			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$status->user->screen_name.'" target="_blank"><img src="'.$status->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>';
+			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$status->created_at.'</span></p></div>';
+			echo "</li>\n";
+		}
+
+
+		//#TODO データの一覧を出力
 		$sns_trend_list_table = new SnsTrendListTable();
 		$sns_trend_list_table->prepare_items();
 

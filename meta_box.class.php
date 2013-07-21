@@ -143,7 +143,7 @@ class MetaBox {
 					case 'text':
 						//#TODO metaが複数の時の処理
 						$meta_value = array_pop($meta_values);
-						if (!$meta_value) $meta_value = $param['input_value'][0];
+						if (is_null($meta_value)) $meta_value = $param['input_value'][0];// $meta_value===''の場合は代入しない。
 						?>
 
 						<label for="<?php esc_attr_e($param['meta_key']); ?>"><?php esc_html_e($param['meta_key']); ?> ：</label>
@@ -241,7 +241,7 @@ class MetaBox {
 					case 'checkbox':
 						break;
 					case 'text':
-						if ($validate['length']) {
+						if (isset($validate['length']) && $validate['length']) {
 							$js_str .= sprintf(
 								"
 								if ( $(\"input[name='%s']\").val().length > %d ) {
@@ -252,7 +252,7 @@ class MetaBox {
 								$validate['length']
 							);
 						}
-						if ($validate['require']) {
+						if (isset($validate['require']) && $validate['require']) {
 							$js_str .= sprintf(
 								"
 								if ($(\"input[name='%s']\").val() == '') {
