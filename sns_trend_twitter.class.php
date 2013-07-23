@@ -12,9 +12,21 @@ namespace SnsTrend;
 
 class SnsTrendTwitter {
 
-	public $keyword = 'ワードプレス';
+	public $keyword             = 'ワードプレス';
 
-	public $tweet = array();
+	public $tweet               = array();
+
+	public $option_name         = 'sns_trend_twitter';
+
+	public $consumer_key        = '';
+	public $consumer_secret     = '';
+	public $access_token        = '';
+	public $access_token_secret = '';
+
+	public $connection = null;
+
+
+
 
 	public function __construct() {
 
@@ -35,44 +47,55 @@ class SnsTrendTwitter {
 
 	public function init() {
 
-		//#TODO init() 初期化 パラメータからキーワードを受け取る config
+		// optionから取得
+		if ( $sns_trend_twitter = get_option($this->option_name) ) {
+			$this->consumer_key = $sns_trend_twitter['consumer_key'];
+			$this->consumer_secret = $sns_trend_twitter['consumer_secret'];
+			$this->access_token = $sns_trend_twitter['access_token'];
+			$this->access_token_secret = $sns_trend_twitter['access_token_secret'];
+
+			/* Create a TwitterOauth object with consumer/my application tokens. */
+			$this->connection = new \TwitterOAuth($this->consumer_key, $this->consumer_secret, $this->access_token, $this->access_token_secret);
+
+			/* Proxy Setting */
+			if (defined('WP_PROXY_HOST')) {
+				$proxy = (defined('WP_PROXY_PORT')) ? WP_PROXY_HOST.":".WP_PROXY_PORT : WP_PROXY_HOST;
+				$this->connection->setProxy($proxy);
+			}
+
+			//#TODO 使うかはどこで判断？
+			/* OAuth 2 Bearer Token */
+			$this->connection->getBearerToken();// Use Application-only authentication
+			//var_dump($this->connection);
+		}
+
 
 	}
 
 
+	/**
+	 *
+	 * @param string $keyword
+	 * @return array
+	 */
 	public function search($keyword='') {
-		//#TODO search_tweet() twitterAPIにアクセスしてツイートを取得
+		//#TODO search_tweet() twitterAPIにアクセスしてツイートを取得 パラメータからキーワードを受け取る
 
 		$q = ($keyword) ? $keyword : "#GitHub";
 		$param = array("q" => urlencode($q), "count" => "20");
 
 
-		/* Create a TwitterOauth object with consumer/my application tokens. */
-		//$connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET);
 
-		/* Create a TwitterOauth object with consumer */
-		$sns_trend_twitter = get_option('sns_trend_twitter');
-		//var_dump($sns_trend_twitter);
-		$connection = new \TwitterOAuth($sns_trend_twitter['consumer_key'], $sns_trend_twitter['consumer_secret']);
 
-		/* Proxy Setting */
-		if (defined('WP_PROXY_HOST')) {
-			$proxy = (defined('WP_PROXY_PORT')) ? WP_PROXY_HOST.":".WP_PROXY_PORT : WP_PROXY_HOST;
-			$connection->setProxy($proxy);
-		}
+		$this->tweet = $this->connection->get('search/tweets', $param);
 
-		/* OAuth 2 Bearer Token */
-		$connection->getBearerToken();
-
-		$this->tweet = $connection->get('search/tweets', $param);
-
-		var_dump($connection->http_header['x_rate_limit_remaining']);
+		var_dump($this->connection->http_header['x_rate_limit_remaining']);
 
 		return $this->tweet;
 	}
 
 	public function set_db() {
-		//#TODO set_db() trendsテーブルにデータを格納 どこに持たすか
+		//#TODO set_db() trendsテーブルにデータを格納 どこに持たすか trend_data.class
 
 	}
 

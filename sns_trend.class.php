@@ -35,6 +35,9 @@ class SnsTrend {
 		if (!class_exists('SnsTrendTwitter'))
 			require_once SNS_TREND_ABSPATH . '/sns_trend_twitter.class.php';
 
+		if (!class_exists('SnsTrendOption'))
+			require_once SNS_TREND_ABSPATH . '/sns_trend_option.class.php';
+
 		$this->init();
 	}
 
@@ -97,8 +100,8 @@ class SnsTrend {
 		$trend_data = new SnsTrendData();
 
 		//#TODO 設定画面を追加
-		add_action('admin_init', array($this, 'setting_options_page'));
-		add_action('admin_menu', array($this, 'add_options_page'));
+		$trend_option = new SnsTrendOption();
+
 
 
 		//#TODO 管理メニューに追加するフック example
@@ -106,116 +109,6 @@ class SnsTrend {
 	}
 
 
-	/**
-	 * 設定ページのセッティング
-	 */
-	public function setting_options_page() {
-		//#TODO 一般設定セクションをここに作成
-
-
-		// hidden 'option_page' 'action' '_wpnonce' '_wp_http_referer' settings_fields($option_group) で出力
-		register_setting( 'sns_trend_options_group', 'sns_trend_general' );
-		// 一般設定
-		add_settings_section('sns_trend_general', __('general'), array($this, 'twitter_section_text'), 'sns_trend_general');
-		add_settings_field('color', __('Color'), array($this, 'setting_input'), 'sns_trend_general', 'sns_trend_general',
-			array(
-				'label_for' => 'color',
-				'type' => 'text',
-				'option_name' => 'sns_trend_general',
-//				'option_name_key' => 'consumer_key'
-			)
-		);
-
-		// hidden 'option_page' 'action' '_wpnonce' '_wp_http_referer' settings_fields($option_group) で出力
-		register_setting( 'sns_trend_options_group', 'sns_trend_twitter', array($this, 'plugin_options_validate') );
-		// セクションを設定 do_settings_sections('twitter') で出力
-		add_settings_section('sns_trend_twitter', 'Twitter OAuth settings', array($this, 'twitter_section_text'), 'sns_trend_twitter');
-		// フィールドを設定 第4引数で指定した
-		add_settings_field('consumer_key', 'CONSUMER_KEY', array($this, 'setting_input'), 'sns_trend_twitter', 'sns_trend_twitter',
-			array(
-				'label_for' => 'consumer_key',
-				'type' => 'text',
-				'option_name' => 'sns_trend_twitter',
-				'option_name_key' => 'consumer_key'
-			)
-		);
-		add_settings_field('consumer_secret', 'CONSUMER_SECRET', array($this, 'setting_input'), 'sns_trend_twitter', 'sns_trend_twitter',
-			array(
-				'label_for' => 'consumer_secret',
-				'type' => 'text',
-				'option_name' => 'sns_trend_twitter',
-				'option_name_key' => 'consumer_secret'
-			)
-		);
-	}
-	/**
-	 * callback validate sanitize
-	 * @param $input
-	 * @return mixed
-	 */
-	function plugin_options_validate($input) {
-		$newinput = $input;
-		$newinput['text_string'] = trim($input['text_string']);
-		if(!preg_match('/^[a-z0-9]{32}$/i', $newinput['text_string'])) {
-			$newinput['text_string'] = '';
-		}
-		return $newinput;
-	}
-	/**
-	 * callback add_settings_section()
-	 * セクションにechoする
-	 */
-	public function twitter_section_text() {
-		_e('<p>Main description of this section here.</p>');
-	}
-	/**
-	 * callback add_settings_field()
-	 */
-	public function setting_input($args) {
-		$type = $args['type'];
-		$option_name = $args['option_name'];
-		$option_name_key = (isset($args['option_name_key'])) ? $args['option_name_key'] : 0 ;
-
-		$options = get_option($option_name);
-		var_dump($options);
-
-		switch ($type) {
-			case 'text' :
-				$input = sprintf('<input type="%s" id="%s" name="%s[%s]" size="40" value="%s">', $type, $option_name_key, $option_name, $option_name_key, esc_attr($options[$option_name_key]));
-				break;
-			default :
-				break;
-		}
-		echo $input;
-	}
-
-	/**
-	 * 設定ページ
-	 */
-	public function add_options_page() {
-	//#TODO 設定用ページ
-		add_options_page(__('SNS Trend'), __('SNS Trend'), 'administrator', 'options', array($this, 'render_options_page'));
-	}
-	/**
-	 * Render options page.
-	 */
-	public function render_options_page() {
-		global $title;
-		?>
-		<div class="wrap">
-			<div id="icon-options-general" class="icon32"></div>
-			<h2>
-				<?php _e($title); ?>
-			</h2>
-			<form method="post"action="options.php">
-				<?php settings_fields('sns_trend_options_group'); ?>
-				<?php do_settings_sections('sns_trend_general'); ?>
-				<?php do_settings_sections('sns_trend_twitter'); ?>
-				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>">
-			</form>
-		</div>
-		<?php
-	}
 
 
 	/**
@@ -338,56 +231,4 @@ class SnsTrend {
 
 }
 
-
-
-// ------------------------------------------------------------------
-// Add all your sections, fields and settings during admin_init
-// ------------------------------------------------------------------
-//
-
-function eg_settings_api_init() {
-	// Add the section to reading settings so we can add our
-	// fields to it
-	add_settings_section('eg_setting_section',
-		'Example settings section in reading',
-		'\SnsTrend\eg_setting_section_callback_function',
-		'reading');
-
-	// Add the field with the names and function to use for our new
-	// settings, put it in our new section
-	add_settings_field('eg_setting_name',
-		'Example setting Name',
-		'\SnsTrend\eg_setting_callback_function',
-		'reading',
-		'eg_setting_section');
-
-	// Register our setting so that $_POST handling is done for us and
-	// our callback function just has to echo the <input>
-	register_setting('reading','eg_setting_name');
-}// eg_settings_api_init()
-
-add_action('admin_init', '\SnsTrend\eg_settings_api_init');
-
-// ------------------------------------------------------------------
-// Settings section callback function
-// ------------------------------------------------------------------
-//
-// This function is needed if we added a new section. This function
-// will be run at the start of our section
-//
-
-function eg_setting_section_callback_function() {
-	echo '<p>Intro text for our settings section</p>';
-}
-
-// ------------------------------------------------------------------
-// Callback function for our example setting
-// ------------------------------------------------------------------
-//
-// creates a checkbox true/false option. Other types are surely possible
-//
-
-function eg_setting_callback_function() {
-	echo '<input name="eg_setting_name" id="gv_thumbnails_insert_into_excerpt" type="checkbox" value="1" class="code" ' . checked( 1, get_option('eg_setting_name'), false ) . ' /> Explanation text';
-}
 ?>
