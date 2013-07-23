@@ -40,10 +40,6 @@ class SnsTrendTwitter {
 	}
 
 
-	public static function setting_option() {
-		var_dump("aaaa");
-	}
-
 	public function search($keyword='') {
 		//#TODO search_tweet() twitterAPIにアクセスしてツイートを取得
 
@@ -55,10 +51,15 @@ class SnsTrendTwitter {
 		//$connection = new TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET);
 
 		/* Create a TwitterOauth object with consumer */
-		$connection = new \TwitterOAuth(CONSUMER_KEY, CONSUMER_SECRET);
+		$sns_trend_twitter = get_option('sns_trend_twitter');
+		//var_dump($sns_trend_twitter);
+		$connection = new \TwitterOAuth($sns_trend_twitter['consumer_key'], $sns_trend_twitter['consumer_secret']);
 
 		/* Proxy Setting */
-		//$connection->setProxy(PROXY_URL);
+		if (defined('WP_PROXY_HOST')) {
+			$proxy = (defined('WP_PROXY_PORT')) ? WP_PROXY_HOST.":".WP_PROXY_PORT : WP_PROXY_HOST;
+			$connection->setProxy($proxy);
+		}
 
 		/* OAuth 2 Bearer Token */
 		$connection->getBearerToken();

@@ -33,21 +33,6 @@ class SnsTrendData {
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array($this, 'add_pages'));
 
-		//#TODO action==get
-		if (isset($_REQUEST['action'])) {
-			var_dump($_REQUEST);
-			switch ($_REQUEST['action']) {
-				case 'get':
-					//#TODO nonce check
-					//#TODO twitter class ajaxでの呼び出しを考慮して作る
-					$sns_trend_twitter = new SnsTrendTwitter();
-					$this->data = $sns_trend_twitter->search('うわあああ');
-
-					break;
-				default :
-					break;
-			}
-		}
 
 	}
 
@@ -59,6 +44,20 @@ class SnsTrendData {
 
 	public function render_trend_data_list() {
 
+		//#TODO action==get
+		if (isset($_REQUEST['action'])) {
+			//var_dump($_REQUEST);
+			switch ($_REQUEST['action']) {
+				case 'get':
+					//#TODO nonce check
+					//#TODO twitter class ajaxでの呼び出しを考慮して作る
+					$sns_trend_twitter = new SnsTrendTwitter();
+					$this->data = $sns_trend_twitter->search('うわあああ');
+					break;
+				default :
+					break;
+			}
+		}
 		//var_dump($this->data);
 		foreach($this->data->statuses as $status){
 			$text = \Twitter_Autolink::create($status->text)

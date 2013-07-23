@@ -40,7 +40,8 @@ class SnsTrend {
 
 	protected function init() {
 
-		//#TODO ワードのリストはカスタム投稿タイプ'trend'を使う。postmetaにwordを設定。searchAPIで検索されたデータをtrendsテーブルに格納
+		//#TODO ワードのリストはカスタム投稿タイプ'trend'を使う。
+		//        postmetaにwordを設定。searchAPIで検索されたデータをtrendsテーブルに格納
 		$this->tables = array(
 			'trends' => $this->wpdb->prefix.'trends',
 		);
@@ -111,42 +112,38 @@ class SnsTrend {
 	public function setting_options_page() {
 		//#TODO 一般設定セクションをここに作成
 
-		//#TODO twitterAPIの設定項目を追加
-		SnsTrendTwitter::setting_option();
 
 		// hidden 'option_page' 'action' '_wpnonce' '_wp_http_referer' settings_fields($option_group) で出力
-		register_setting( 'sns_trend_options_group', 'sns_trend' );
+		register_setting( 'sns_trend_options_group', 'sns_trend_general' );
 		// 一般設定
-		add_settings_section('general', __('general'), array($this, 'twitter_section_text'), 'general');
-		add_settings_field('color', __('Color'), array($this, 'setting_input'), 'general', 'general',
+		add_settings_section('sns_trend_general', __('general'), array($this, 'twitter_section_text'), 'sns_trend_general');
+		add_settings_field('color', __('Color'), array($this, 'setting_input'), 'sns_trend_general', 'sns_trend_general',
 			array(
-				'label_for' => 'general',
+				'label_for' => 'color',
 				'type' => 'text',
-				'option_name' => 'sns_trend',
+				'option_name' => 'sns_trend_general',
 //				'option_name_key' => 'consumer_key'
 			)
 		);
 
-
-
 		// hidden 'option_page' 'action' '_wpnonce' '_wp_http_referer' settings_fields($option_group) で出力
-		register_setting( 'twitter_options_group', 'twitter_api', array($this, 'plugin_options_validate') );
+		register_setting( 'sns_trend_options_group', 'sns_trend_twitter', array($this, 'plugin_options_validate') );
 		// セクションを設定 do_settings_sections('twitter') で出力
-		add_settings_section('twitter-setting', 'Twitter OAuth settings', array($this, 'twitter_section_text'), 'twitter');
+		add_settings_section('sns_trend_twitter', 'Twitter OAuth settings', array($this, 'twitter_section_text'), 'sns_trend_twitter');
 		// フィールドを設定 第4引数で指定した
-		add_settings_field('consumer_key', 'CONSUMER_KEY', array($this, 'setting_input'), 'twitter', 'twitter-setting',
+		add_settings_field('consumer_key', 'CONSUMER_KEY', array($this, 'setting_input'), 'sns_trend_twitter', 'sns_trend_twitter',
 			array(
-				'label_for' => 'twitter_api_consumer_secret',
+				'label_for' => 'consumer_key',
 				'type' => 'text',
-				'option_name' => 'twitter_api',
+				'option_name' => 'sns_trend_twitter',
 				'option_name_key' => 'consumer_key'
 			)
 		);
-		add_settings_field('consumer_secret', 'CONSUMER_SECRET', array($this, 'setting_input'), 'twitter', 'twitter-setting',
+		add_settings_field('consumer_secret', 'CONSUMER_SECRET', array($this, 'setting_input'), 'sns_trend_twitter', 'sns_trend_twitter',
 			array(
-				'label_for' => 'twitter_api_consumer_secret',
+				'label_for' => 'consumer_secret',
 				'type' => 'text',
-				'option_name' => 'twitter_api',
+				'option_name' => 'sns_trend_twitter',
 				'option_name_key' => 'consumer_secret'
 			)
 		);
@@ -177,14 +174,14 @@ class SnsTrend {
 	public function setting_input($args) {
 		$type = $args['type'];
 		$option_name = $args['option_name'];
-		$option_name_key = $args['option_name_key'];
+		$option_name_key = (isset($args['option_name_key'])) ? $args['option_name_key'] : 0 ;
 
 		$options = get_option($option_name);
 		var_dump($options);
 
 		switch ($type) {
 			case 'text' :
-				$input = "<input type='{$type}' id='{$option_name}_{$option_name_key}' name='{$option_name}[{$option_name_key}]' size='40' value='{$options[$option_name_key]}'>";
+				$input = sprintf('<input type="%s" id="%s" name="%s[%s]" size="40" value="%s">', $type, $option_name_key, $option_name, $option_name_key, esc_attr($options[$option_name_key]));
 				break;
 			default :
 				break;
@@ -212,9 +209,8 @@ class SnsTrend {
 			</h2>
 			<form method="post"action="options.php">
 				<?php settings_fields('sns_trend_options_group'); ?>
-				<?php settings_fields('twitter_options_group'); ?>
-				<?php do_settings_sections('general'); ?>
-				<?php do_settings_sections('twitter'); ?>
+				<?php do_settings_sections('sns_trend_general'); ?>
+				<?php do_settings_sections('sns_trend_twitter'); ?>
 				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>">
 			</form>
 		</div>
