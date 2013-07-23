@@ -36,21 +36,12 @@ class SnsTrendTwitter {
 	public function init() {
 
 		//#TODO init() 初期化 パラメータからキーワードを受け取る config
-//#TODO optionに格納する
-// access token is geted from https://dev.twitter.com/apps
-		define('CONSUMER_KEY', 'xxxxxxxxxxxxxx');
-		define('CONSUMER_SECRET', 'xxxxxxxxxxxxxxxxxxxxxxx');
 
-// callback
-		define('OAUTH_CALLBACK', 'http://example.com/twitteroauth/callback.php');
+	}
 
-// access token is geted from https://dev.twitter.com/apps
-		define('OAUTH_TOKEN', 'xxxxxxxxxxxxxxxxxxxx');
-		define('OAUTH_TOKEN_SECRET', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxx');
 
-// proxy
-		define('PROXY_URL', 'http://proxyurl:80');
-
+	public static function setting_option() {
+		var_dump("aaaa");
 	}
 
 	public function search($keyword='') {

@@ -26,15 +26,12 @@ class SnsTrendData {
 		if (!class_exists('SnsTrendListTable'))
 			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
 
-		if (!class_exists('SnsTrendTwitter'))
-			require_once( SNS_TREND_ABSPATH . '/sns_trend_twitter.class.php' );
-
 		$this->init();
 	}
 
 	public function init() {
 		// 管理メニューに追加するフック
-		add_action('admin_menu', array(&$this, 'mt_add_pages'));
+		add_action('admin_menu', array($this, 'add_pages'));
 
 		//#TODO action==get
 		if (isset($_REQUEST['action'])) {
@@ -54,7 +51,7 @@ class SnsTrendData {
 
 	}
 
-	public function mt_add_pages() {
+	public function add_pages() {
 		// カスタムのトップレベルメニューにサブメニューを追加:
 		add_submenu_page("edit.php?post_type=trend", __('Trend Data'), __('Trend Data'), 'administrator', 'sns_trend_data_list', array($this, 'render_trend_data_list'));
 

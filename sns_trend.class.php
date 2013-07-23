@@ -23,9 +23,20 @@ class SnsTrend {
 		global $wpdb;
 		$this->wpdb = $wpdb;
 
+		if(!class_exists('CustomPostType'))
+			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
+
+		if(!class_exists('MetaBox'))
+			require_once SNS_TREND_ABSPATH . "/meta_box.class.php";
+
+		if(!class_exists('SnsTrendData'))
+			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";
+
+		if (!class_exists('SnsTrendTwitter'))
+			require_once SNS_TREND_ABSPATH . '/sns_trend_twitter.class.php';
+
 		$this->init();
 	}
-
 
 	protected function init() {
 
@@ -34,16 +45,7 @@ class SnsTrend {
 			'trends' => $this->wpdb->prefix.'trends',
 		);
 
-		// hook
-		if(!class_exists('CustomPostType')){
-			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
-		}
 		$trend = new CustomPostType('trend');
-
-
-		if(!class_exists('MetaBox')){
-			require_once SNS_TREND_ABSPATH . "/meta_box.class.php";
-		}
 
 		$params = array(
 			array(
@@ -91,39 +93,129 @@ class SnsTrend {
 			'callback_args' => null
 		));
 
-
-
-		if(!class_exists('SnsTrendData')){
-			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";
-		}
 		$trend_data = new SnsTrendData();
+
+		//#TODO 設定画面を追加
+		add_action('admin_init', array($this, 'setting_options_page'));
+		add_action('admin_menu', array($this, 'add_options_page'));
 
 
 		//#TODO 管理メニューに追加するフック example
-		add_action('admin_menu', array(&$this, 'mt_add_pages'));
-
+		add_action('admin_menu', array($this, 'mt_add_pages'));
 	}
 
-	public function options_page() {
-		//#TODO option値は各クラスに書くのでactionfookを作成してクラスの方でそのフックに引っ掛ける
+
+	/**
+	 * 設定ページのセッティング
+	 */
+	public function setting_options_page() {
+		//#TODO 一般設定セクションをここに作成
+
+		//#TODO twitterAPIの設定項目を追加
+		SnsTrendTwitter::setting_option();
+
+		// hidden 'option_page' 'action' '_wpnonce' '_wp_http_referer' settings_fields($option_group) で出力
+		register_setting( 'sns_trend_options_group', 'sns_trend' );
+		// 一般設定
+		add_settings_section('general', __('general'), array($this, 'twitter_section_text'), 'general');
+		add_settings_field('color', __('Color'), array($this, 'setting_input'), 'general', 'general',
+			array(
+				'label_for' => 'general',
+				'type' => 'text',
+				'option_name' => 'sns_trend',
+//				'option_name_key' => 'consumer_key'
+			)
+		);
+
+
+
+		// hidden 'option_page' 'action' '_wpnonce' '_wp_http_referer' settings_fields($option_group) で出力
+		register_setting( 'twitter_options_group', 'twitter_api', array($this, 'plugin_options_validate') );
+		// セクションを設定 do_settings_sections('twitter') で出力
+		add_settings_section('twitter-setting', 'Twitter OAuth settings', array($this, 'twitter_section_text'), 'twitter');
+		// フィールドを設定 第4引数で指定した
+		add_settings_field('consumer_key', 'CONSUMER_KEY', array($this, 'setting_input'), 'twitter', 'twitter-setting',
+			array(
+				'label_for' => 'twitter_api_consumer_secret',
+				'type' => 'text',
+				'option_name' => 'twitter_api',
+				'option_name_key' => 'consumer_key'
+			)
+		);
+		add_settings_field('consumer_secret', 'CONSUMER_SECRET', array($this, 'setting_input'), 'twitter', 'twitter-setting',
+			array(
+				'label_for' => 'twitter_api_consumer_secret',
+				'type' => 'text',
+				'option_name' => 'twitter_api',
+				'option_name_key' => 'consumer_secret'
+			)
+		);
+	}
+	/**
+	 * callback validate sanitize
+	 * @param $input
+	 * @return mixed
+	 */
+	function plugin_options_validate($input) {
+		$newinput = $input;
+		$newinput['text_string'] = trim($input['text_string']);
+		if(!preg_match('/^[a-z0-9]{32}$/i', $newinput['text_string'])) {
+			$newinput['text_string'] = '';
+		}
+		return $newinput;
+	}
+	/**
+	 * callback add_settings_section()
+	 * セクションにechoする
+	 */
+	public function twitter_section_text() {
+		_e('<p>Main description of this section here.</p>');
+	}
+	/**
+	 * callback add_settings_field()
+	 */
+	public function setting_input($args) {
+		$type = $args['type'];
+		$option_name = $args['option_name'];
+		$option_name_key = $args['option_name_key'];
+
+		$options = get_option($option_name);
+		var_dump($options);
+
+		switch ($type) {
+			case 'text' :
+				$input = "<input type='{$type}' id='{$option_name}_{$option_name_key}' name='{$option_name}[{$option_name_key}]' size='40' value='{$options[$option_name_key]}'>";
+				break;
+			default :
+				break;
+		}
+		echo $input;
+	}
+
+	/**
+	 * 設定ページ
+	 */
+	public function add_options_page() {
+	//#TODO 設定用ページ
+		add_options_page(__('SNS Trend'), __('SNS Trend'), 'administrator', 'options', array($this, 'render_options_page'));
+	}
+	/**
+	 * Render options page.
+	 */
+	public function render_options_page() {
 		global $title;
 		?>
-		<?php if ( empty($_POST ) ) : ?>
-			<div id="message" class="updated fade"><p><strong><?php _e('Options saved.') ?></strong></p></div>
-		<?php endif; ?>
 		<div class="wrap">
 			<div id="icon-options-general" class="icon32"></div>
 			<h2>
 				<?php _e($title); ?>
 			</h2>
-			<form method="post" action="">
-				<input type="hidden" name="action" value="update" />
-				<input type="hidden" name="page_options" value="new_option_name" />
-				<?php wp_nonce_field('update-options'); ?>
-				<p><input type="text" name="new_option_name" value="<?php echo get_option('new_option_name'); ?>" /></p>
-				<p class="submit">
-					<input type="submit" name="Submit" value="<?php _e('Update Options »') ?>" />
-				</p>
+			<form method="post"action="options.php">
+				<?php settings_fields('sns_trend_options_group'); ?>
+				<?php settings_fields('twitter_options_group'); ?>
+				<?php do_settings_sections('general'); ?>
+				<?php do_settings_sections('twitter'); ?>
+				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>">
 			</form>
 		</div>
 		<?php
@@ -134,10 +226,6 @@ class SnsTrend {
 	 * menu画面追加サンプル
 	 */
 	public function mt_add_pages() {
-
-		//#TODO 設定用ページ
-		add_options_page(__('SNS Trend'), __('SNS Trend'), 'administrator', 'options', array($this, 'options_page'));
-
 
 		// mt_options_page() はTest Optionsサブメニューのページコンテンツを表示
 		function mt_options_page() {
@@ -252,5 +340,58 @@ class SnsTrend {
 		//var_dump("bbbbb");
 	}
 
+}
+
+
+
+// ------------------------------------------------------------------
+// Add all your sections, fields and settings during admin_init
+// ------------------------------------------------------------------
+//
+
+function eg_settings_api_init() {
+	// Add the section to reading settings so we can add our
+	// fields to it
+	add_settings_section('eg_setting_section',
+		'Example settings section in reading',
+		'\SnsTrend\eg_setting_section_callback_function',
+		'reading');
+
+	// Add the field with the names and function to use for our new
+	// settings, put it in our new section
+	add_settings_field('eg_setting_name',
+		'Example setting Name',
+		'\SnsTrend\eg_setting_callback_function',
+		'reading',
+		'eg_setting_section');
+
+	// Register our setting so that $_POST handling is done for us and
+	// our callback function just has to echo the <input>
+	register_setting('reading','eg_setting_name');
+}// eg_settings_api_init()
+
+add_action('admin_init', '\SnsTrend\eg_settings_api_init');
+
+// ------------------------------------------------------------------
+// Settings section callback function
+// ------------------------------------------------------------------
+//
+// This function is needed if we added a new section. This function
+// will be run at the start of our section
+//
+
+function eg_setting_section_callback_function() {
+	echo '<p>Intro text for our settings section</p>';
+}
+
+// ------------------------------------------------------------------
+// Callback function for our example setting
+// ------------------------------------------------------------------
+//
+// creates a checkbox true/false option. Other types are surely possible
+//
+
+function eg_setting_callback_function() {
+	echo '<input name="eg_setting_name" id="gv_thumbnails_insert_into_excerpt" type="checkbox" value="1" class="code" ' . checked( 1, get_option('eg_setting_name'), false ) . ' /> Explanation text';
 }
 ?>
