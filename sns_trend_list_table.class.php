@@ -9,11 +9,13 @@
 
 namespace SnsTrend;
 
+use WP_List_Table;
+
 if(!class_exists('WP_List_Table')){
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
 
-class SnsTrendListTable extends \WP_List_Table {
+class SnsTrendListTable extends WP_List_Table {
 
 	/** ************************************************************************
 	 * Normally we would be querying data from a database and manipulating that

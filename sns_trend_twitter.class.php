@@ -9,6 +9,8 @@
 
 namespace SnsTrend;
 
+use WP_HTTP_Proxy;
+use TwitterOAuth;
 
 class SnsTrendTwitter {
 
@@ -23,29 +25,15 @@ class SnsTrendTwitter {
 	public $access_token        = '';
 	public $access_token_secret = '';
 
-	public $connection = null;
-
-
-
+	public $connection;
 
 	public function __construct() {
 
 		if(!class_exists('TwitterOAuth'))
 			require_once( SNS_TREND_ABSPATH . '/libs/twitteroauth/twitteroauth.php' );
 
-		/* Autolink */
 		if (!class_exists('Twitter_Autolink'))
 			require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
-
-
-		$this->init();
-		//$this->search($this->keyword);
-		//$this->set_db();
-		//$this->get_tweet();
-
-	}
-
-	public function init() {
 
 		// optionから取得
 		if ( $sns_trend_twitter = get_option($this->option_name) ) {
@@ -55,17 +43,18 @@ class SnsTrendTwitter {
 			$this->access_token_secret = $sns_trend_twitter['access_token_secret'];
 
 			/* Create a TwitterOauth object with consumer/my application tokens. */
-			$this->connection = new \TwitterOAuth($this->consumer_key, $this->consumer_secret, $this->access_token, $this->access_token_secret);
+			$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, $this->access_token, $this->access_token_secret);
 
 			/* Proxy Setting */
-			if (defined('WP_PROXY_HOST')) {
-				$proxy = (defined('WP_PROXY_PORT')) ? WP_PROXY_HOST.":".WP_PROXY_PORT : WP_PROXY_HOST;
-				$this->connection->setProxy($proxy);
+			$proxy = new WP_HTTP_Proxy();
+			if ($proxy->is_enabled()) {
+				$url = 'http://';
+				if ($proxy->use_authentication())
+					$url .= $proxy->username() . ":" . $proxy->password() . "@";
+				$url .= $proxy->host() . ":" . $proxy->port();
+				$this->connection->setProxy($url);
 			}
 
-			//#TODO 使うかはどこで判断？
-			/* OAuth 2 Bearer Token */
-			$this->connection->getBearerToken();// Use Application-only authentication
 			//var_dump($this->connection);
 		}
 
@@ -79,17 +68,19 @@ class SnsTrendTwitter {
 	 * @return array
 	 */
 	public function search($keyword='') {
-		//#TODO search_tweet() twitterAPIにアクセスしてツイートを取得 パラメータからキーワードを受け取る
+		//#TODO twitterAPIにアクセスしてツイートを取得 パラメータからキーワードを受け取る
 
-		$q = ($keyword) ? $keyword : "#GitHub";
-		$param = array("q" => urlencode($q), "count" => "20");
+		//#TODO 使うかはどこで判断？
+		/* OAuth 2 Bearer Token Use Application-only authentication */
+		$this->connection->getBearerToken();
 
-
-
+		if ($keyword) $this->keyword = $keyword;
+		$param = array(
+			"q" => urlencode($this->keyword),
+			"count" => "20"
+		);
 
 		$this->tweet = $this->connection->get('search/tweets', $param);
-
-		var_dump($this->connection->http_header['x_rate_limit_remaining']);
 
 		return $this->tweet;
 	}
@@ -100,10 +91,10 @@ class SnsTrendTwitter {
 	}
 
 	/**
-	 * APIで取得したデータを返す
 	 * @return array
 	 */
-	public function get_tweet() {
+	public function getTweet()
+	{
 		return $this->tweet;
 	}
 

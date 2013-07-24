@@ -17,17 +17,16 @@ class SnsTrend {
 	 */
 	public $db_version = "0.1.4";
 
+	public $wpdb;
 	public $tables = array();
 
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb = $wpdb;
+		$this->tables = array( 'trends' => $this->wpdb->prefix.'trends' );
 
 		if(!class_exists('CustomPostType'))
 			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
-
-		if(!class_exists('MetaBox'))
-			require_once SNS_TREND_ABSPATH . "/meta_box.class.php";
 
 		if(!class_exists('SnsTrendData'))
 			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";
@@ -38,81 +37,25 @@ class SnsTrend {
 		if (!class_exists('SnsTrendOption'))
 			require_once SNS_TREND_ABSPATH . '/sns_trend_option.class.php';
 
-		$this->init();
+		$this->setPage();
 	}
 
-	protected function init() {
-
-		//#TODO ワードのリストはカスタム投稿タイプ'trend'を使う。
-		//        postmetaにwordを設定。searchAPIで検索されたデータをtrendsテーブルに格納
-		$this->tables = array(
-			'trends' => $this->wpdb->prefix.'trends',
-		);
-
+	protected function setPage() {
+		// カスタムポストタイプ登録
 		$trend = new CustomPostType('trend');
 
-		$params = array(
-			array(
-				'meta_key'   => 'trend_keywords',
-				'input_type' => 'text',
-				'input_value' => 'らーめん',
-				'description' => __("検索ワードを入力してください。"),
-				'validate'   => array(
-					'length'  => 100,
-//					'require' => true
-				),
-//				'ajax'          => false, // 保存にajaxを使うか
-			),
-			array(
-				'meta_key'   => 'radio_test',
-				'input_type' => 'radio',
-				'input_value' => array('ra-menn',"afdsfasd","あああああ"),
-				'description' => __("検索ワードを選んでください。"),
-				'validate'   => array(
-					'length'  => 100,
-					'require' => true
-				),
-				'ajax'          => false, // 保存にajaxを使うか
-			),
-			array(
-				'meta_key'   => 'checkbox_test',
-				'input_type' => 'checkbox',
-				'input_value' => array('wattu',"bbbb","あああああいいい"),
-				'description' => __("検索ワードを選んでください。（複数可）"),
-				'validate'   => array(
-					'length'  => 100,
-					'require' => true
-				),
-				'ajax'          => false, // 保存にajaxを使うか
-			),
-		);
-		$meta_box = new MetaBox(array(
-			'id'            => 'meta_keywords',
-			'title'         => _x('キーワード', 'word hosoku'),
-			'params'         => $params,
-//			'callback'      => 'trends_meta_html',
-			'screen'        => $trend->post_type,
-			'context'       => 'advanced',
-			'priority'      => 'default',
-			'callback_args' => null
-		));
-
+		// trendsテーブルの一覧ページ
 		$trend_data = new SnsTrendData();
 
-		//#TODO 設定画面を追加
+		// 設定画面を追加
 		$trend_option = new SnsTrendOption();
-
-
 
 		//#TODO 管理メニューに追加するフック example
 		add_action('admin_menu', array($this, 'mt_add_pages'));
 	}
 
-
-
-
 	/**
-	 * menu画面追加サンプル
+	 * #TODO menu画面追加サンプル
 	 */
 	public function mt_add_pages() {
 
@@ -141,13 +84,13 @@ class SnsTrend {
 		// 設定メニュー下にサブメニューを追加:
 		add_options_page('Test Options', 'Test Options', 'administrator', 'testoptions', '\SnsTrend\mt_options_page');
 		// 管理メニューにサブメニューを追加
-		add_management_page('Test Manage', 'Test Manage', 'administrator', 'testmanage', 'mt_manage_page');
+		add_management_page('Test Manage', 'Test Manage', 'administrator', 'testmanage', '\SnsTrend\mt_manage_page');
 		// 新しいトップレベルメニューを追加(分からず屋):
-		add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', __FILE__, 'mt_toplevel_page');
+		add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', __FILE__, '\SnsTrend\mt_toplevel_page');
 		// カスタムのトップレベルメニューにサブメニューを追加:
-		add_submenu_page(__FILE__, 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', 'mt_sublevel_page');
+		add_submenu_page(__FILE__, 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', '\SnsTrend\mt_sublevel_page');
 		// カスタムのトップレベルメニューに二つ目のサブメニューを追加:
-		add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', 'mt_sublevel_page2');
+		add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', '\SnsTrend\mt_sublevel_page2');
 	}
 
 
@@ -156,11 +99,10 @@ class SnsTrend {
 
 		//データベースが存在するか確認
 		$is_db_exists = $this->wpdb->get_var($this->wpdb->prepare("SHOW TABLES LIKE %s", $this->tables['trends']));
-		if($is_db_exists){
+		if($is_db_exists) {
 			//データベースが最新かどうか確認
-			if(version_compare(get_option('sns_trend_db_version', 0), $this->db_version, ">=")){
-				//必要なければ関数を終了
-				return;
+			if(version_compare(get_option('sns_trend_db_version', 0), $this->db_version, ">=")) {
+				return;//必要なければ関数を終了
 			}
 		}
 		//ここまで実行されているということはデータベース作成が必要
@@ -187,14 +129,13 @@ class SnsTrend {
           PRIMARY KEY  (id)
         )';
 		$result = dbDelta($sql);
-		//#TODO create の時のみサンプルデータをinsert
+		// create の時のみサンプルデータをinsert
 		$this->insert_example_data($result);
 	}
 
 	protected function insert_example_data($result) {
 
 		// Only insert the example data if no data already exists
-
 		$sql = '
 		SELECT
 			id
@@ -208,7 +149,6 @@ class SnsTrend {
 		}
 
 		// Insert example data
-
 		$rows = array(
 			array(
 //						'id' => 1,
@@ -221,8 +161,6 @@ class SnsTrend {
 		foreach($rows as $row) {
 			$this->wpdb->insert($this->tables['trends'], $row);
 		}
-
-
 	}
 
 	public function deactivate() {

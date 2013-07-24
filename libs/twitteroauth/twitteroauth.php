@@ -36,6 +36,8 @@ class TwitterOAuth {
   /* Immediately retry the API call if the response was not successful. */
   //public $retry = TRUE;
 
+  public $http_header = array();
+
   public $encoded_bearer_credentials = null;
   public $bearer_access_token = null;
 

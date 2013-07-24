@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by JetBrains PhpStorm.
- * User: KS
+ * User: among753
  * Date: 2013/07/10
  * Time: 23:59
  * To change this template use File | Settings | File Templates.
@@ -9,16 +9,16 @@
 
 namespace SnsTrend;
 
-//use SnsTrend\SnsTrendListTable;
-//use SnsTrend\TT_Example_List_Table;
-
+use Twitter_Autolink;
 
 class SnsTrendData {
 
 	public $data = array();
 
-	public function __construct() {
+	public $post_type = 'trend';
+	public $page = 'sns_trend_data_list';
 
+	public function __construct() {
 
 		if (!class_exists('TT_Example_List_Table'))
 			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
@@ -26,49 +26,40 @@ class SnsTrendData {
 		if (!class_exists('SnsTrendListTable'))
 			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
 
-		$this->init();
-	}
-
-	public function init() {
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array($this, 'add_pages'));
-
-
 	}
 
 	public function add_pages() {
 		// カスタムのトップレベルメニューにサブメニューを追加:
-		add_submenu_page("edit.php?post_type=trend", __('Trend Data'), __('Trend Data'), 'administrator', 'sns_trend_data_list', array($this, 'render_trend_data_list'));
+		$hook_suffix = add_submenu_page("edit.php?post_type={$this->post_type}", __('Trend Data'), __('Trend Data'), 'administrator', $this->page, array($this, 'render_trend_data_list'));
+
+		// edit.php?post_type=trend&page=sns_trend_data_list
+		add_action("admin_head-{$hook_suffix}", array($this, 'admin_head_action'));
 
 	}
 
-	public function render_trend_data_list() {
-
+	public function admin_head_action() {
 		//#TODO action==get
 		if (isset($_REQUEST['action'])) {
 			//var_dump($_REQUEST);
 			switch ($_REQUEST['action']) {
-				case 'get':
+				case 'search':
 					//#TODO nonce check
 					//#TODO twitter class ajaxでの呼び出しを考慮して作る
 					$sns_trend_twitter = new SnsTrendTwitter();
-					$this->data = $sns_trend_twitter->search('うわあああ');
+					$this->data = $sns_trend_twitter->search('#phpstorm');
+					var_dump( $sns_trend_twitter->connection->http_header['x_rate_limit_remaining'] );
 					break;
 				default :
 					break;
 			}
 		}
-		//var_dump($this->data);
-		foreach($this->data->statuses as $status){
-			$text = \Twitter_Autolink::create($status->text)
-				->setNoFollow(false)
-				->addLinks();
-			echo '<li>';
-			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$status->user->screen_name.'" target="_blank"><img src="'.$status->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>';
-			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$status->created_at.'</span></p></div>';
-			echo "</li>\n";
-		}
+	}
 
+	public function render_trend_data_list() {
+
+		$this->render_twitter_list($this->data);
 
 		//#TODO データの一覧を出力
 		$sns_trend_list_table = new SnsTrendListTable();
@@ -91,6 +82,19 @@ class SnsTrendData {
 			</form>
 		</div>
 		<?php
+	}
+	public function render_twitter_list($data) {
+		//var_dump($this->data);
+		if (!$this->data) return false;
+		foreach($data->statuses as $status){
+			$text = Twitter_Autolink::create($status->text)
+				->setNoFollow(false)
+				->addLinks();
+			echo '<li>'.PHP_EOL;
+			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$status->user->screen_name.'" target="_blank"><img src="'.$status->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>'.PHP_EOL;
+			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$status->created_at.'</span></p></div>'.PHP_EOL;
+			echo "</li>".PHP_EOL;
+		}
 	}
 
 }

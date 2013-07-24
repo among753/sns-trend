@@ -11,11 +11,64 @@ namespace SnsTrend;
 
 class CustomPostType {
 
-	public $post_type = 'trend';
+	public $post_type = '';
+
+	public $meta_box;
 
 	public function __construct($post_type) {
 		$this->post_type = $post_type;
 		$this->add_actions();
+
+		if(!class_exists('MetaBox'))
+			require_once SNS_TREND_ABSPATH . "/meta_box.class.php";
+
+		// カスタムポストタイプにメタボックス追加
+		$params = array(
+			array(
+				'meta_key'   => 'trend_keywords',
+				'input_type' => 'text',
+				'input_value' => 'らーめん',
+				'description' => __("検索ワードを入力してください。"),
+				'validate'   => array(
+					'length'  => 100,
+//					'require' => true
+				),
+//				'ajax'          => false, // 保存にajaxを使うか
+			),
+			array(
+				'meta_key'   => 'radio_test',
+				'input_type' => 'radio',
+				'input_value' => array('ra-menn',"afdsfasd","あああああ"),
+				'description' => __("検索ワードを選んでください。"),
+				'validate'   => array(
+					'length'  => 100,
+					'require' => true
+				),
+				'ajax'          => false, // 保存にajaxを使うか
+			),
+			array(
+				'meta_key'   => 'checkbox_test',
+				'input_type' => 'checkbox',
+				'input_value' => array('wattu',"bbbb","あああああいいい"),
+				'description' => __("検索ワードを選んでください。（複数可）"),
+				'validate'   => array(
+					'length'  => 100,
+					'require' => true
+				),
+				'ajax'          => false, // 保存にajaxを使うか
+			),
+		);
+		$this->meta_box = new MetaBox(array(
+			'id'            => 'meta_keywords',
+			'title'         => _x('キーワード', 'word hosoku'),
+			'params'         => $params,
+//			'callback'      => 'trends_meta_html',
+			'screen'        => $this->post_type,
+			'context'       => 'advanced',
+			'priority'      => 'default',
+			'callback_args' => null
+		));
+
 	}
 
 	public function add_actions() {
