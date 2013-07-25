@@ -87,12 +87,6 @@ class SnsTrendTwitter {
 		/* OAuth 2 Bearer Token Use Application-only authentication */
 		$this->connection->getBearerToken();
 
-		if ($keyword) $this->keyword = $keyword;
-		$param = array(
-			"q" => urlencode($this->keyword),
-			"count" => "20"
-		);
-
 		$this->tweet = $this->connection->get('search/tweets', $param);
 
 		return $this->tweet;

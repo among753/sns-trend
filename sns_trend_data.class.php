@@ -57,7 +57,7 @@ class SnsTrendData {
 					$twitter = new SnsTrendTwitter();
 
 					$param = array(
-						'q' => '#phpstorm',
+						'q' => 'うわああああああああ',
 					);
 					$this->data = $twitter->search($param);
 					var_dump( $twitter->connection->http_header['x_rate_limit_remaining'] );
