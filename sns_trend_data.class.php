@@ -18,16 +18,23 @@ class SnsTrendData {
 	public $post_type = 'trend';
 	public $page = 'sns_trend_data_list';
 
+	public $trends;
+
 	public function __construct() {
 
 		if (!class_exists('TT_Example_List_Table'))
 			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
-
 		if (!class_exists('SnsTrendListTable'))
 			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
 
+		if(!class_exists('TrendsModel'))
+			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
+		$this->trends = new TrendsModel();
+
+
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array($this, 'add_pages'));
+
 	}
 
 	public function add_pages() {
@@ -47,9 +54,13 @@ class SnsTrendData {
 				case 'search':
 					//#TODO nonce check
 					//#TODO twitter class ajaxでの呼び出しを考慮して作る
-					$sns_trend_twitter = new SnsTrendTwitter();
-					$this->data = $sns_trend_twitter->search('#phpstorm');
-					var_dump( $sns_trend_twitter->connection->http_header['x_rate_limit_remaining'] );
+					$twitter = new SnsTrendTwitter();
+
+					$param = array(
+						'q' => '#phpstorm',
+					);
+					$this->data = $twitter->search($param);
+					var_dump( $twitter->connection->http_header['x_rate_limit_remaining'] );
 					break;
 				default :
 					break;
@@ -84,8 +95,8 @@ class SnsTrendData {
 		<?php
 	}
 	public function render_twitter_list($data) {
-		//var_dump($this->data);
-		if (!$this->data) return false;
+		var_dump($data);
+		if (!$data) return false;
 		foreach($data->statuses as $status){
 			$text = Twitter_Autolink::create($status->text)
 				->setNoFollow(false)

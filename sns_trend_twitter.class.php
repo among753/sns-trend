@@ -63,12 +63,25 @@ class SnsTrendTwitter {
 
 
 	/**
-	 *
+	 * twitterAPIにアクセスしてツイートを取得
+	 * https://dev.twitter.com/docs/api/1.1/get/search/tweets
 	 * @param string $keyword
 	 * @return array
 	 */
-	public function search($keyword='') {
-		//#TODO twitterAPIにアクセスしてツイートを取得 パラメータからキーワードを受け取る
+	public function search($param) {
+		$default = array(
+			'q' => '', // A UTF-8, URL-encoded search query of 1,000 characters maximum, including operators.
+			'geocode' => '', // Example Values: 37.781157,-122.398720,1mi(km)
+			'lang' => '', // Example Values: eu
+			'locale' => '', // (only ja is currently effective).
+			'result_type' => 'mixed', // Example Values: mixed, recent, popular
+			'count' => '', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
+			'until' => '', // Returns tweets generated before the given date. Example Values: 2012-09-01
+			'since_id' => '', // Returns results with an ID greater than (that is, more recent than) the specified ID.
+			'max_id' => '', // Returns results with an ID less than (that is, older than) or equal to the specified ID.
+			'include_entities' => '', // The entities node will be disincluded when set to false.
+			'callback' => '', // If supplied, the response will use the JSONP format with a callback of the given name.
+		);
 
 		//#TODO 使うかはどこで判断？
 		/* OAuth 2 Bearer Token Use Application-only authentication */

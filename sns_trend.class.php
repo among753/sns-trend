@@ -2,28 +2,21 @@
 
 namespace SnsTrend;
 
-
 /**
  * Class SnsTrend
  */
 class SnsTrend {
 
 	/**
-	 * @var string プラグインをアップデートする場合は更新
-	 */
-	public $version = "0.1";
-	/**
 	 * @var string DBをアップデートする場合は更新
 	 */
 	public $db_version = "0.1.4";
-
-	public $wpdb;
-	public $tables = array();
+	public $option_db_version_name = 'sns_trend_db_version';
 
 	public function __construct() {
-		global $wpdb;
-		$this->wpdb = $wpdb;
-		$this->tables = array( 'trends' => $this->wpdb->prefix.'trends' );
+		//Register Activation Hook.
+		register_activation_hook(__FILE__, array($this, 'activate'));
+		register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
 		if(!class_exists('CustomPostType'))
 			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
@@ -37,10 +30,6 @@ class SnsTrend {
 		if (!class_exists('SnsTrendOption'))
 			require_once SNS_TREND_ABSPATH . '/sns_trend_option.class.php';
 
-		$this->setPage();
-	}
-
-	protected function setPage() {
 		// カスタムポストタイプ登録
 		$trend = new CustomPostType('trend');
 
@@ -54,11 +43,37 @@ class SnsTrend {
 		add_action('admin_menu', array($this, 'mt_add_pages'));
 	}
 
+	public function activate() {
+		// 複数テーブルのアクティベート化 tableをmodel化してmodel単位で扱う
+		if(!class_exists('TrendsModel'))
+			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
+		$trends = new TrendsModel();
+
+		if($trends->table_exists()) {
+			//データベースが最新かどうか確認
+			if(version_compare(get_option($this->option_db_version_name, 0), $this->db_version, ">="))
+				return;
+		}
+		//ここまで実行されているということはデータベース作成が必要
+
+		//データベースが作成されない場合はSQLにエラーがあるので、$wpdb->show_errors(); と書いて確認してください
+		$trends->createTable();
+
+		// create の時のみサンプルデータをinsert
+		$trends->insert_example_data();
+
+		//データベースのバージョンを保存する
+		update_option($this->option_db_version_name, $this->db_version);
+	}
+
+	public function deactivate() {
+		//var_dump("bbbbb");
+	}
+
 	/**
 	 * #TODO menu画面追加サンプル
 	 */
 	public function mt_add_pages() {
-
 		// mt_options_page() はTest Optionsサブメニューのページコンテンツを表示
 		function mt_options_page() {
 			echo "<h2>Test Options</h2>";
@@ -93,80 +108,5 @@ class SnsTrend {
 		add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', '\SnsTrend\mt_sublevel_page2');
 	}
 
-
-	public function activate() {
-		//#TODO 複数テーブルのアクティベート化 tableをmodel化してmodel単位で扱う
-
-		//データベースが存在するか確認
-		$is_db_exists = $this->wpdb->get_var($this->wpdb->prepare("SHOW TABLES LIKE %s", $this->tables['trends']));
-		if($is_db_exists) {
-			//データベースが最新かどうか確認
-			if(version_compare(get_option('sns_trend_db_version', 0), $this->db_version, ">=")) {
-				return;//必要なければ関数を終了
-			}
-		}
-		//ここまで実行されているということはデータベース作成が必要
-		//必要なファイルを読み込み
-		require_once ABSPATH."wp-admin/includes/upgrade.php";
-		//dbDeltaを実行
-		//データベースが作成されない場合はSQLにエラーがあるので、
-		//$wpdb->show_errors(); と書いて確認してください
-		$this->activateDB();
-
-		//データベースのバージョンを保存する
-		update_option("sns_trend_db_version", $this->version);
-	}
-
-	protected function activateDB(){
-
-		$sql = '
-        CREATE TABLE '.$this->tables['trends'].' (
-          id bigint(20) NOT NULL auto_increment,
-          post_id bigint(20) NOT NULL,
-          data text,
-          created datetime,
-          modified datetime,
-          PRIMARY KEY  (id)
-        )';
-		$result = dbDelta($sql);
-		// create の時のみサンプルデータをinsert
-		$this->insert_example_data($result);
-	}
-
-	protected function insert_example_data($result) {
-
-		// Only insert the example data if no data already exists
-		$sql = '
-		SELECT
-			id
-		FROM
-			'.$this->tables['trends'].'
-		LIMIT
-			1';
-		$data_exists = $this->wpdb->get_var($sql);
-		if ($data_exists) {
-			return false;
-		}
-
-		// Insert example data
-		$rows = array(
-			array(
-//						'id' => 1,
-				'post_id' => 3,
-				'data' => "serializedataが入ります",
-				'created' => current_time( 'mysql' ),// WPで設定したローカル時間（'Y-m-d H:i:s'形式）
-				'modified' => current_time( 'mysql' ),
-			),
-		);
-		foreach($rows as $row) {
-			$this->wpdb->insert($this->tables['trends'], $row);
-		}
-	}
-
-	public function deactivate() {
-		//var_dump("bbbbb");
-	}
-
 }
-
 ?>
