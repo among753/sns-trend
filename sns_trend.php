@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: SNS Trend Develop
+Plugin Name: SNS Trend
 Plugin URI: https://github.com/among753/sns-trend
 Description: SNS Trend Ranking
 Author: among753
