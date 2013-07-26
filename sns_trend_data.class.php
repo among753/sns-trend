@@ -24,6 +24,7 @@ class SnsTrendData {
 
 		if (!class_exists('TT_Example_List_Table'))
 			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
+
 		if (!class_exists('SnsTrendListTable'))
 			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
 
@@ -31,6 +32,8 @@ class SnsTrendData {
 			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
 		$this->trends = new TrendsModel();
 
+		if(!class_exists('SnsTrendTwitter'))
+			require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
 
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array($this, 'add_pages'));
@@ -52,14 +55,21 @@ class SnsTrendData {
 			//var_dump($_REQUEST);
 			switch ($_REQUEST['action']) {
 				case 'search':
-					//#TODO nonce check
-					//#TODO twitter class ajaxでの呼び出しを考慮して作る
+					//#TODO twitter class ajaxでの呼び出しを考慮して作る nonce check
 					$twitter = new SnsTrendTwitter();
 
 					$param = array(
 						'q' => 'うわああああああああ',
 					);
 					$this->data = $twitter->search($param);
+					//var_dump($this->data);
+					//#TODO 重複を考慮してDBに保存
+					//#TODO データ整形
+					foreach ($this->data->statuses as $row) {
+						//単純にインサート 重複チェックは行う
+						$this->trends->save($row);
+					}
+
 					var_dump( $twitter->connection->http_header['x_rate_limit_remaining'] );
 					break;
 				default :
@@ -72,9 +82,15 @@ class SnsTrendData {
 
 		$this->render_twitter_list($this->data);
 
+
+
 		//#TODO データの一覧を出力
-		$sns_trend_list_table = new SnsTrendListTable();
-		$sns_trend_list_table->prepare_items();
+		$sns_trend_list_table = new SnsTrendListTable($this->trends);
+		$param = array(
+			'post_id' => 1,
+			'output_type' => 'ARRAY_A'
+		);
+		$sns_trend_list_table->prepare_items($param);
 
 		global $title;
 		?>
@@ -94,8 +110,8 @@ class SnsTrendData {
 		</div>
 		<?php
 	}
+
 	public function render_twitter_list($data) {
-		var_dump($data);
 		if (!$data) return false;
 		foreach($data->statuses as $status){
 			$text = Twitter_Autolink::create($status->text)

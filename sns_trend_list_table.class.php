@@ -27,76 +27,37 @@ class SnsTrendListTable extends WP_List_Table {
 	 **************************************************************************/
 	var $example_data = array(
 		array(
-			'id'        => 1,
+			'trend_id'        => 1,
 			'post_id'     => '3',
-			'title'    => 'たいとる！',
-			'data'    => 'でーただよー',
-			'created'  => '2013-07-07 22:43:18',
-			'modified'  => '2013-07-07 22:43:18'
+			'trend_data'    => 'でーただよー',
+			'trend_created'  => '2013-07-07 22:43:18',
+			'trend_modified'  => '2013-07-07 22:43:18'
 		),
 		array(
-			'id'        => 2,
+			'trend_id'        => 2,
 			'post_id'     => '2',
-			'title'    => 'たいとる！',
-			'data'    => 'データだーーーーよ',
-			'created'  => '2013-07-07 22:43:18',
-			'modified'  => '2013-07-07 22:43:18'
+			'trend_data'    => 'データだーーーーよ',
+			'trend_created'  => '2013-07-07 22:43:18',
+			'trend_modified'  => '2013-07-07 22:43:18'
 		),
-//		array(
-//			'ID'        => 1,
-//			'title'     => '300',
-//			'rating'    => 'R',
-//			'director'  => 'Zach Snyder'
-//		),
-//		array(
-//			'ID'        => 2,
-//			'title'     => 'Eyes Wide Shut',
-//			'rating'    => 'R',
-//			'director'  => 'Stanley Kubrick'
-//		),
-//		array(
-//			'ID'        => 3,
-//			'title'     => 'Moulin Rouge!',
-//			'rating'    => 'PG-13',
-//			'director'  => 'Baz Luhrman'
-//		),
-//		array(
-//			'ID'        => 4,
-//			'title'     => 'Snow White',
-//			'rating'    => 'G',
-//			'director'  => 'Walt Disney'
-//		),
-//		array(
-//			'ID'        => 5,
-//			'title'     => 'Super 8',
-//			'rating'    => 'PG-13',
-//			'director'  => 'JJ Abrams'
-//		),
-//		array(
-//			'ID'        => 6,
-//			'title'     => 'The Fountain',
-//			'rating'    => 'PG-13',
-//			'director'  => 'Darren Aronofsky'
-//		),
-//		array(
-//			'ID'        => 7,
-//			'title'     => 'Watchmen',
-//			'rating'    => 'R',
-//			'director'  => 'Zach Snyder'
-//		)
+
 	);
+
+	public $model;
 
 	/** ************************************************************************
 	 * REQUIRED. Set up a constructor that references the parent constructor. We
 	 * use the parent reference to set some default configs.
 	 ***************************************************************************/
-	function __construct(){
+	function __construct($model){
 		global $status, $page;
+
+		$this->model = $model;
 
 		//Set parent defaults
 		parent::__construct( array(
-			'singular'  => 'trend',     //singular name of the listed records
-			'plural'    => 'trends',    //plural name of the listed records
+			'singular'  => preg_replace("/s$/", "", $this->model->table_name),     //singular name of the listed records
+			'plural'    => $this->model->table_name,    //plural name of the listed records
 			'ajax'      => false        //does this table support ajax?
 		) );
 
@@ -126,11 +87,11 @@ class SnsTrendListTable extends WP_List_Table {
 	 **************************************************************************/
 	function column_default($item, $column_name){
 		switch($column_name){
-			case 'created':
-			case 'modified':
-				return $item[$column_name];
+			case $this->model->created:
+			case $this->model->modified:
+				return print_r($item,true);
 			default:
-				return print_r($item,true); //Show the whole array for troubleshooting purposes
+				return $item[$column_name]; //Show the whole array for troubleshooting purposes
 		}
 	}
 
@@ -151,18 +112,18 @@ class SnsTrendListTable extends WP_List_Table {
 	 * @param array $item A singular item (one full row's worth of data)
 	 * @return string Text to be placed inside the column <td> (movie title only)
 	 **************************************************************************/
-	function column_title($item){
+	function column_trend_id($item){
 
 		//Build row actions
 		$actions = array(
-			'edit'      => sprintf('<a href="?page=%s&action=%s&%s=%s">Edit</a>', $_REQUEST['page'], 'edit', 'trend', $item['id']),
-			'delete'    => sprintf('<a href="?page=%s&action=%s&%s=%s">Delete</a>', $_REQUEST['page'], 'delete', 'trend', $item['id']),
+			'edit'      => sprintf('<a href="?page=%s&action=%s&%s=%s">Edit</a>', $_REQUEST['page'], 'edit', 'trend', $item[$this->model->id]),
+			'delete'    => sprintf('<a href="?page=%s&action=%s&%s=%s">Delete</a>', $_REQUEST['page'], 'delete', 'trend', $item[$this->model->id]),
 		);
 
 		//Return the title contents
 		return sprintf('%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
-			/*$1%s*/ $item['title'],
-			/*$2%s*/ $item['id'],
+			/*$1%s*/ $item[$this->model->id],
+			/*$2%s*/ $item[$this->model->id],
 			/*$3%s*/ $this->row_actions($actions)
 		);
 	}
@@ -180,7 +141,7 @@ class SnsTrendListTable extends WP_List_Table {
 		return sprintf(
 			'<input type="checkbox" name="%1$s[]" value="%2$s" />',
 			/*$1%s*/ $this->_args['singular'],  //Let's simply repurpose the table's singular label ("movie")
-			/*$2%s*/ $item['id']                //The value of the checkbox should be the record's id
+			/*$2%s*/ $item[$this->model->id]                //The value of the checkbox should be the record's id
 		);
 	}
 
@@ -201,11 +162,11 @@ class SnsTrendListTable extends WP_List_Table {
 	function get_columns(){
 		$columns = array(
 			'cb'        => '<input type="checkbox" />', //Render a checkbox instead of text
-			'id'     => 'ID',
+			'trend_id'     => 'ID',
 			'post_id'     => 'POST_ID',
-			'title'     => 'TITLE',
-			'created'    => 'CREATED',
-			'modified'  => 'MODIFIED'
+			'trend_data'  => 'DATA',
+			'trend_created'    => 'CREATED',
+			'trend_modified'  => 'MODIFIED'
 		);
 		return $columns;
 	}
@@ -226,12 +187,11 @@ class SnsTrendListTable extends WP_List_Table {
 	 **************************************************************************/
 	function get_sortable_columns() {
 		$sortable_columns = array(
-			'id'     => array('id',false),     //true means it's already sorted
+			'trend_id'     => array('trend_id',false),     //true means it's already sorted
 			'post_id'    => array('post_id',false),
-			'title'  => array('title',false),
-			'data'  => array('data',false),
-			'created'  => array('created',false),
-			'modified'  => array('modified',false)
+			'trend_data'  => array('trend_data',false),
+			'trend_created'  => array('trend_created',false),
+			'trend_modified'  => array('trend_modified',false)
 		);
 		return $sortable_columns;
 	}
@@ -291,7 +251,7 @@ class SnsTrendListTable extends WP_List_Table {
 	 * @uses $this->get_pagenum()
 	 * @uses $this->set_pagination_args()
 	 **************************************************************************/
-	function prepare_items() {
+	function prepare_items($param) {
 		global $wpdb; //This is used only if making any database queries
 
 		/**
@@ -337,7 +297,10 @@ class SnsTrendListTable extends WP_List_Table {
 		 * use sort and pagination data to build a custom query instead, as you'll
 		 * be able to use your precisely-queried data immediately.
 		 */
-		$data = $this->example_data;
+		$data = $this->model->get($param);
+		//var_dump($data);
+		//$data = $this->example_data;
+
 
 
 		/**

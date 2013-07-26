@@ -13,11 +13,11 @@ namespace SnsTrend;
 	This SQL query will create the table to store your object.
 
 	CREATE TABLE `trends` (
-	`id` BIGINT NOT NULL auto_increment,
+	`trend_id` BIGINT NOT NULL auto_increment,
 	`post_id` BIGINT NOT NULL,
-	`data` TEXT NOT NULL,
-	`created` DATETIME NOT NULL,
-	`modified` DATETIME NOT NULL,
+	`trend_data` TEXT NOT NULL,
+	`trend_created` DATETIME NOT NULL,
+	`trend_modified` DATETIME NOT NULL,
 	PRIMARY KEY  (`id`)) ENGINE=MyISAM;
 */
 
@@ -27,32 +27,37 @@ namespace SnsTrend;
  */
 class TrendsModel {
 	/**
-	 * @var BIGINT
+	 * table name
 	 */
-	public $id;
+	public $table_name;
+
 	/**
 	 * @var BIGINT
 	 */
-	public $post_id;
+	public $id = 'trend_id';
+	/**
+	 * @var BIGINT
+	 */
+	public $post_id = 'post_id';
 	/**
 	 * @var TEXT
 	 */
-	public $data;
+	public $data = 'trend_data';
 	/**
 	 * @var DATETIME
 	 */
-	public $created;
+	public $created = 'trend_created';
 	/**
 	 * @var DATETIME
 	 */
-	public $modified;
+	public $modified = 'trend_modified';
 
 	public $attribute_type = array(
-		"id" => array('db_attributes' => array("NUMERIC", "BIGINT")),
-		"post_id" => array('db_attributes' => array("NUMERIC", "BIGINT")),
-		"data" => array('db_attributes' => array("TEXT", "TEXT")),
-		"created" => array('db_attributes' => array("TEXT", "DATETIME")),
-		"modified" => array('db_attributes' => array("TEXT", "DATETIME"))
+		"trend_id"       => array('db_attributes' => array("NUMERIC", "BIGINT")),
+		"post_id"        => array('db_attributes' => array("NUMERIC", "BIGINT")),
+		"trend_data"     => array('db_attributes' => array("TEXT", "TEXT")),
+		"trend_created"  => array('db_attributes' => array("TEXT", "DATETIME")),
+		"trend_modified" => array('db_attributes' => array("TEXT", "DATETIME"))
 	);
 
 	public $query;
@@ -60,30 +65,27 @@ class TrendsModel {
 	// WordPress DB class
 	public $wpdb;
 
-	// table name
-	public $table;
-
 	public function __construct() {
 		global $wpdb;
 		$this->wpdb = $wpdb;
-		$this->table = $this->wpdb->prefix.'trends';
+		$this->table_name = $this->wpdb->prefix.'trends';
 	}
 
 	public function table_exists() {
 		//データベースが存在するか確認
-		$exists = $this->wpdb->get_var($this->wpdb->prepare("SHOW TABLES LIKE %s", $this->table));
+		$exists = $this->wpdb->get_var($this->wpdb->prepare("SHOW TABLES LIKE %s", $this->table_name));
 		return $exists;
 	}
 
 	public function createTable() {
 		//#TODO せっかくなのでpropertyを使って書く
 		$sql = '
-        CREATE TABLE '.$this->table.' (
-          id bigint(20) NOT NULL auto_increment,
+        CREATE TABLE '.$this->table_name.' (
+          trend_id bigint(20) NOT NULL auto_increment,
           post_id bigint(20) NOT NULL,
-          data text,
-          created datetime,
-          modified datetime,
+          trend_data text,
+          trend_created datetime,
+          trend_modified datetime,
           PRIMARY KEY  (id)
         )';
 		require_once ABSPATH."wp-admin/includes/upgrade.php";
@@ -91,37 +93,55 @@ class TrendsModel {
 	}
 	public function insert_example_data() {
 		// Only insert the example data if no data already exists
-		$sql = '
-		SELECT
-			id
-		FROM
-			'.$this->table.'
-		LIMIT
-			1';
+		$sql = 'SELECT '.$this->id.' FROM '.$this->table_name.' LIMIT 1';
 		if ( $this->wpdb->get_var($sql) )
 			return false;
 
 		// Insert example data
 		$rows = array(
 			array(
-//						'id' => 1,
+//						'trend_id' => 1,
 				'post_id' => 3,
-				'data' => "serializedataが入ります",
-				'created' => current_time( 'mysql' ),// WPで設定したローカル時間（'Y-m-d H:i:s'形式）
-				'modified' => current_time( 'mysql' ),
+				'trend_data' => "serializedataが入ります",
+				'trend_created' => current_time('mysql'),// WPで設定したローカル時間（'Y-m-d H:i:s'形式）
+				'trend_modified' => current_time('mysql'),
 			),
 		);
 		foreach($rows as $row) {
-			$this->wpdb->insert($this->table, $row);
+			$this->wpdb->insert($this->table_name, $row);
 		}
 	}
 
-	public function get() {
+	/**
+	 * $param 条件で絞り込み
+	 * @param $param
+	 */
+	public function get($param) {
 
+		$query = $this->wpdb->prepare(
+			"SELECT * FROM {$this->table_name} WHERE {$this->post_id} = %d",
+			$param['post_id']
+		);
+
+		return $this->wpdb->get_results($query, $param['output_type']);
 	}
 
-	public function save($rows) {
+	/**
+	 * @param $row
+	 */
+	public function save($row) {
+		//var_dump($row);
 
+		$data = array(
+			$this->post_id  => 1,
+			$this->data     => serialize($row),
+			$this->created  => current_time('mysql'),
+			$this->modified => current_time('mysql')
+		);
+		$this->wpdb->insert( $this->table_name, $data, array('%d', '%s', '%s', '%s') );
+		//$this->wpdb->update( $this->table_name, array( 'column1' => 'value1', 'column2' => 'value2' ), array( 'ID' => 1 ), array( '%s', '%d' ), array( '%d' ) );
+		//#TODO エラー処理 エラー返す
+		return $result = true;
 	}
 
 }
