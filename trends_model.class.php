@@ -30,7 +30,6 @@ class TrendsModel {
 	 * table name
 	 */
 	public $table_name;
-
 	/**
 	 * @var BIGINT
 	 */

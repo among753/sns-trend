@@ -22,9 +22,6 @@ class SnsTrendData {
 
 	public function __construct() {
 
-		if (!class_exists('TT_Example_List_Table'))
-			require_once( SNS_TREND_ABSPATH . '/list-table-example.php' );
-
 		if (!class_exists('SnsTrendListTable'))
 			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
 
@@ -50,7 +47,7 @@ class SnsTrendData {
 	}
 
 	public function admin_head_action() {
-		//#TODO action==get
+
 		if (isset($_REQUEST['action'])) {
 			//var_dump($_REQUEST);
 			switch ($_REQUEST['action']) {

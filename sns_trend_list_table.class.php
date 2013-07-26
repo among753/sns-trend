@@ -11,38 +11,15 @@ namespace SnsTrend;
 
 use WP_List_Table;
 
-if(!class_exists('WP_List_Table')){
+if(!class_exists('WP_List_Table'))
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
-}
+
 
 class SnsTrendListTable extends WP_List_Table {
 
-	/** ************************************************************************
-	 * Normally we would be querying data from a database and manipulating that
-	 * for use in your list table. For this example, we're going to simplify it
-	 * slightly and create a pre-built array. Think of this as the data that might
-	 * be returned by $wpdb->query().
-	 *
+	/**
 	 * @var array
-	 **************************************************************************/
-	var $example_data = array(
-		array(
-			'trend_id'        => 1,
-			'post_id'     => '3',
-			'trend_data'    => 'でーただよー',
-			'trend_created'  => '2013-07-07 22:43:18',
-			'trend_modified'  => '2013-07-07 22:43:18'
-		),
-		array(
-			'trend_id'        => 2,
-			'post_id'     => '2',
-			'trend_data'    => 'データだーーーーよ',
-			'trend_created'  => '2013-07-07 22:43:18',
-			'trend_modified'  => '2013-07-07 22:43:18'
-		),
-
-	);
-
+	 */
 	public $model;
 
 	/** ************************************************************************
