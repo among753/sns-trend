@@ -20,6 +20,7 @@ namespace SnsTrend;
 	`trend_modified` DATETIME NOT NULL,
 	PRIMARY KEY  (`id`)) ENGINE=MyISAM;
 */
+use wpdb;
 
 /**
  * Class TrendsModel
@@ -27,30 +28,33 @@ namespace SnsTrend;
  */
 class TrendsModel {
 	/**
-	 * table name
+	 * @var string
 	 */
 	public $table_name;
 	/**
-	 * @var BIGINT
+	 * @var string BIGINT
 	 */
 	public $id = 'trend_id';
 	/**
-	 * @var BIGINT
+	 * @var string BIGINT
 	 */
 	public $post_id = 'post_id';
 	/**
-	 * @var TEXT
+	 * @var string TEXT
 	 */
 	public $data = 'trend_data';
 	/**
-	 * @var DATETIME
+	 * @var string DATETIME
 	 */
 	public $created = 'trend_created';
 	/**
-	 * @var DATETIME
+	 * @var string DATETIME
 	 */
 	public $modified = 'trend_modified';
 
+	/**
+	 * @var array
+	 */
 	public $attribute_type = array(
 		"trend_id"       => array('db_attributes' => array("NUMERIC", "BIGINT")),
 		"post_id"        => array('db_attributes' => array("NUMERIC", "BIGINT")),
@@ -61,13 +65,21 @@ class TrendsModel {
 
 	public $query;
 
-	// WordPress DB class
+	/**
+	 * @var wpdb
+	 */
 	public $wpdb;
 
+
+
 	public function __construct() {
+		/**
+		 * @var $wpdb wpdb
+		 */
 		global $wpdb;
 		$this->wpdb = $wpdb;
 		$this->table_name = $this->wpdb->prefix.'trends';
+
 	}
 
 	public function table_exists() {

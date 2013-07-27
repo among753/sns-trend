@@ -25,6 +25,9 @@ class SnsTrendTwitter {
 	public $access_token        = '';
 	public $access_token_secret = '';
 
+	/**
+	 * @var \TwitterOAuth
+	 */
 	public $connection;
 
 	public function __construct() {
@@ -83,11 +86,17 @@ class SnsTrendTwitter {
 			'callback' => '', // If supplied, the response will use the JSONP format with a callback of the given name.
 		);
 
-		//#TODO 使うかはどこで判断？
+		//#TODO 使うかはどこで判断？ Bearer Token は一度発行すれば使い回せる　いつまで？　要調査
 		/* OAuth 2 Bearer Token Use Application-only authentication */
-		$this->connection->getBearerToken();
+		$bearer_token = $this->connection->getBearerToken();
+		var_dump($bearer_token);
+
+//		$invalidate_bearer_token = $this->connection->invalidateBearerToken($bearer_token);
+//		var_dump($invalidate_bearer_token);
+
 
 		$this->tweet = $this->connection->get('search/tweets', $param);
+		var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
 
 		return $this->tweet;
 	}

@@ -18,14 +18,16 @@ if(!class_exists('WP_List_Table'))
 class SnsTrendListTable extends WP_List_Table {
 
 	/**
-	 * @var array
+	 * @var TrendsModel $model model class
 	 */
 	public $model;
 
-	/** ************************************************************************
+	/**
 	 * REQUIRED. Set up a constructor that references the parent constructor. We
 	 * use the parent reference to set some default configs.
-	 ***************************************************************************/
+	 *
+	 * @param TrendsModel $model model class
+	 */
 	function __construct($model){
 		global $status, $page;
 
@@ -59,7 +61,7 @@ class SnsTrendListTable extends WP_List_Table {
 	 * WP_List_Table::single_row_columns()
 	 *
 	 * @param array $item A singular item (one full row's worth of data)
-	 * @param array $column_name The name/slug of the column to be processed
+	 * @param string $column_name The name/slug of the column to be processed
 	 * @return string Text or HTML to be placed inside the column <td>
 	 **************************************************************************/
 	function column_default($item, $column_name){
@@ -289,7 +291,7 @@ class SnsTrendListTable extends WP_List_Table {
 		 * sorting technique would be unnecessary.
 		 */
 		function usort_reorder($a,$b){
-			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'id'; //If no sort, default to title
+			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'trend_id'; //If no sort, default to title
 			$order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc'; //If no order, default to asc
 			$result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
 			return ($order==='asc') ? $result : -$result; //Send final sort direction to usort

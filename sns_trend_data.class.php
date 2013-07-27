@@ -13,7 +13,10 @@ use Twitter_Autolink;
 
 class SnsTrendData {
 
-	public $data = array();
+	/**
+	 * @var
+	 */
+	public $data;
 
 	public $post_type = 'trend';
 	public $page = 'sns_trend_data_list';
@@ -64,10 +67,9 @@ class SnsTrendData {
 					//#TODO データ整形
 					foreach ($this->data->statuses as $row) {
 						//単純にインサート 重複チェックは行う
-						$this->trends->save($row);
+						//$this->trends->save($row);
 					}
 
-					var_dump( $twitter->connection->http_header['x_rate_limit_remaining'] );
 					break;
 				default :
 					break;
