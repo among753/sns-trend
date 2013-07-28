@@ -19,11 +19,24 @@ class SnsTrendTwitter {
 	public $tweet               = array();
 
 	public $option_name         = 'sns_trend_twitter';
-
-	public $consumer_key        = '';
-	public $consumer_secret     = '';
-	public $access_token        = '';
-	public $access_token_secret = '';
+	public $options = array(
+		'consumer_key'                => '',
+		'consumer_secret'             => '',
+		'access_token'                => '',
+		'access_token_secret'         => '',
+		'bearer_access_token'         => '',
+		'bearer_access_token_expired' => ''
+	);
+	public $consumer_key;
+	public $consumer_secret;
+	public $access_token;
+	public $access_token_secret;
+	public $bearer_access_token;
+	public $bearer_access_token_expired;
+	/**
+	 * @var int Bearer Token 有効期限
+	 */
+	public $expired = 660;
 
 	/**
 	 * @var \TwitterOAuth
@@ -38,30 +51,69 @@ class SnsTrendTwitter {
 		if (!class_exists('Twitter_Autolink'))
 			require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
 
-		// optionから取得
-		if ( $sns_trend_twitter = get_option($this->option_name) ) {
-			$this->consumer_key = $sns_trend_twitter['consumer_key'];
-			$this->consumer_secret = $sns_trend_twitter['consumer_secret'];
-			$this->access_token = $sns_trend_twitter['access_token'];
-			$this->access_token_secret = $sns_trend_twitter['access_token_secret'];
 
-			/* Create a TwitterOauth object with consumer/my application tokens. */
-			$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, $this->access_token, $this->access_token_secret);
+		// optionから取得しセット
+		$this->setProperty();
 
-			/* Proxy Setting */
-			$proxy = new WP_HTTP_Proxy();
-			if ($proxy->is_enabled()) {
-				$url = 'http://';
-				if ($proxy->use_authentication())
-					$url .= $proxy->username() . ":" . $proxy->password() . "@";
-				$url .= $proxy->host() . ":" . $proxy->port();
-				$this->connection->setProxy($url);
+		/* Create a TwitterOauth object with consumer/my application tokens. */
+		$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, $this->access_token, $this->access_token_secret);
+
+		/* Proxy Setting */
+		$proxy = new WP_HTTP_Proxy();
+		if ($proxy->is_enabled()) {
+			//#TODO FIX twitteroauth.php に合わす setProxy($host, $port=80, $id='', $pass='')
+			$url = 'http://';
+			if ($proxy->use_authentication())
+				$url .= $proxy->username() . ":" . $proxy->password() . "@";
+			$url .= $proxy->host() . ":" . $proxy->port();
+			$this->connection->setProxy($url);
+		}
+
+		//#TODO Bearer Token optionsに保存 sns_trend_twitter['bearer_access_token'] sns_trend_twitter['bearer_access_token_expired']
+		/* OAuth 2 Bearer Token Use Application-only authentication */
+		// 期限切れを確認
+		if (strtotime($this->bearer_access_token_expired) + $this->expired < date_i18n('U')) {
+			// Bearer Token 無効化
+			$bet = $this->connection->getBearerToken();
+			echo "getBearerToken() "; var_dump($bet);
+			var_dump($this->connection);
+
+			$inv = $this->connection->invalidateBearerToken( $bet );
+			echo "invalidateBearerToken():"; var_dump($inv);
+
+			var_dump($this->connection);
+
+			sleep(4);
+			// 再発行
+			$this->bearer_access_token = $this->connection->getBearerToken();
+			if (is_string($this->bearer_access_token)) {
+				// optionsに保存
+				$this->options['bearer_access_token'] = $this->bearer_access_token;
+				$this->options['bearer_access_token_expired'] = current_time('mysql');
+				update_option($this->option_name, $this->options);
 			}
-
-			//var_dump($this->connection);
+			echo "再発行："; var_dump($this->bearer_access_token);
+		} else {
+			$this->connection->setBearerToken($this->bearer_access_token);
+			echo "optionsからセット："; var_dump($this->bearer_access_token);
 		}
 
 
+
+	}
+
+	protected function setProperty() {
+		if ( $options = get_option($this->option_name) ) {
+			$this->options = array_merge($this->options, $options);
+			foreach ($this->options as $key => $value) {
+				$this->$key = $value;
+			}
+			var_dump($this->options);
+			if ($this->consumer_key && $this->consumer_secret) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 
@@ -86,10 +138,6 @@ class SnsTrendTwitter {
 			'callback' => '', // If supplied, the response will use the JSONP format with a callback of the given name.
 		);
 
-		//#TODO 使うかはどこで判断？ Bearer Token は一度発行すれば使い回せる　いつまで？　要調査
-		/* OAuth 2 Bearer Token Use Application-only authentication */
-		$bearer_token = $this->connection->getBearerToken();
-		var_dump($bearer_token);
 
 //		$invalidate_bearer_token = $this->connection->invalidateBearerToken($bearer_token);
 //		var_dump($invalidate_bearer_token);

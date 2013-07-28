@@ -94,6 +94,26 @@ class SnsTrendOption {
 				'label_for' => 'access_token_secret',
 			)
 		);
+		add_settings_field('bearer_access_token', null, array($this, 'setting_input'), 'sns_trend_twitter', 'sns_trend_twitter',
+			array(
+				'type' => 'hidden',
+				'option' => array(
+					'key'   => 'sns_trend_twitter',
+					'value' => 'bearer_access_token'
+				),
+//				'label_for' => 'bearer_access_token',
+			)
+		);
+		add_settings_field('bearer_access_token_expired', null, array($this, 'setting_input'), 'sns_trend_twitter', 'sns_trend_twitter',
+			array(
+				'type' => 'hidden',
+				'option' => array(
+					'key'   => 'sns_trend_twitter',
+					'value' => 'bearer_access_token_expired'
+				),
+//				'label_for' => 'bearer_access_token_expired',
+			)
+		);
 	}
 	/**
 	 * callback validate sanitize
@@ -125,7 +145,7 @@ class SnsTrendOption {
 			$options = get_option($option['key']);
 			$id    = $option['value'];
 			$name  = $option['key'] . "[" . $option['value'] . "]";
-			$value = $options[$option['value']];
+			$value = ( isset($options[$option['value']]) ) ? $options[$option['value']] : "";
 		} else {
 			$options = get_option($option);
 			$id    = $option;
@@ -139,6 +159,8 @@ class SnsTrendOption {
 			case 'text' :
 				$input = sprintf('<input type="%s" id="%s" name="%s" size="60" value="%s">', $type, $id, $name, esc_attr($value));
 				break;
+			case 'hidden' :
+				$input = sprintf('<input type="%s" id="%s" name="%s" value="%s">', $type, $id, $name, esc_attr($value));
 			default :
 				break;
 		}
