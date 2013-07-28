@@ -80,10 +80,10 @@ class SnsTrendTwitter {
 
 			$inv = $this->connection->invalidateBearerToken( $bet );
 			echo "invalidateBearerToken():"; var_dump($inv);
-
 			var_dump($this->connection);
 
 			sleep(4);
+
 			// 再発行
 			$this->bearer_access_token = $this->connection->getBearerToken();
 			if (is_string($this->bearer_access_token)) {
@@ -143,10 +143,18 @@ class SnsTrendTwitter {
 //		var_dump($invalidate_bearer_token);
 
 
-		$this->tweet = $this->connection->get('search/tweets', $param);
-		var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
+		$result = $this->connection->get('search/tweets', $param);
+		if (isset($result->errors)) {
+			var_dump($result);
+			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", time() - $this->expired);
+			update_option($this->option_name, $this->options);
+			return "Bearer Tokenが無効だったので有効期限を切らす";
 
-		return $this->tweet;
+
+		} else {
+			var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
+			return $this->tweet = $result;
+		}
 	}
 
 	public function set_db() {
