@@ -36,7 +36,7 @@ class SnsTrendTwitter {
 	/**
 	 * @var int Bearer Token 有効期限
 	 */
-	public $expired = 660;
+	public $expired = 0;
 
 	/**
 	 * @var \TwitterOAuth
@@ -51,7 +51,6 @@ class SnsTrendTwitter {
 		if (!class_exists('Twitter_Autolink'))
 			require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
 
-
 		// optionから取得しセット
 		$this->setProperty();
 
@@ -60,29 +59,16 @@ class SnsTrendTwitter {
 
 		/* Proxy Setting */
 		$proxy = new WP_HTTP_Proxy();
-		if ($proxy->is_enabled()) {
-			//#TODO FIX twitteroauth.php に合わす setProxy($host, $port=80, $id='', $pass='')
-			$url = 'http://';
-			if ($proxy->use_authentication())
-				$url .= $proxy->username() . ":" . $proxy->password() . "@";
-			$url .= $proxy->host() . ":" . $proxy->port();
-			$this->connection->setProxy($url);
-		}
+		if ( $proxy->is_enabled() ) $this->connection->setProxy($proxy->host(), $proxy->port());
 
 		//#TODO Bearer Token optionsに保存 sns_trend_twitter['bearer_access_token'] sns_trend_twitter['bearer_access_token_expired']
 		/* OAuth 2 Bearer Token Use Application-only authentication */
 		// 期限切れを確認
-		if (strtotime($this->bearer_access_token_expired) + $this->expired < date_i18n('U')) {
-			// Bearer Token 無効化
-			$bet = $this->connection->getBearerToken();
-			echo "getBearerToken() "; var_dump($bet);
-			var_dump($this->connection);
+		if ((int)strtotime($this->bearer_access_token_expired) + $this->expired < date_i18n('U')) {
 
-			$inv = $this->connection->invalidateBearerToken( $bet );
+			$inv = $this->connection->invalidateBearerToken($this->connection->getBearerToken());
 			echo "invalidateBearerToken():"; var_dump($inv);
-			var_dump($this->connection);
-
-			sleep(4);
+			//var_dump($this->connection);
 
 			// 再発行
 			$this->bearer_access_token = $this->connection->getBearerToken();
@@ -93,12 +79,11 @@ class SnsTrendTwitter {
 				update_option($this->option_name, $this->options);
 			}
 			echo "再発行："; var_dump($this->bearer_access_token);
+
 		} else {
 			$this->connection->setBearerToken($this->bearer_access_token);
 			echo "optionsからセット："; var_dump($this->bearer_access_token);
 		}
-
-
 
 	}
 
@@ -108,7 +93,7 @@ class SnsTrendTwitter {
 			foreach ($this->options as $key => $value) {
 				$this->$key = $value;
 			}
-			var_dump($this->options);
+			echo "options:"; var_dump($this->options);
 			if ($this->consumer_key && $this->consumer_secret) {
 				return true;
 			}
@@ -138,19 +123,14 @@ class SnsTrendTwitter {
 			'callback' => '', // If supplied, the response will use the JSONP format with a callback of the given name.
 		);
 
-
-//		$invalidate_bearer_token = $this->connection->invalidateBearerToken($bearer_token);
-//		var_dump($invalidate_bearer_token);
-
-
 		$result = $this->connection->get('search/tweets', $param);
 		if (isset($result->errors)) {
 			var_dump($result);
-			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", time() - $this->expired);
+			var_dump(date_i18n("Y-m-d H:i:s",  current_time('TIMESTAMP') - $this->expired));
+			var_dump(date_i18n("Y-m-d H:i:s",  current_time('TIMESTAMP')));
+			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", current_time('TIMESTAMP') - $this->expired);
 			update_option($this->option_name, $this->options);
 			return "Bearer Tokenが無効だったので有効期限を切らす";
-
-
 		} else {
 			var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
 			return $this->tweet = $result;

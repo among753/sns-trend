@@ -67,10 +67,10 @@ class TwitterOAuth {
   public $encoded_bearer_credentials;
   public $bearer_access_token;
 
-  /* Requires proxy */
-  protected $requires_proxy = FALSE;
-  /* Set proxy */
-  protected $proxy = '';
+  /* Set proxy. */
+  protected $proxy_host;
+  protected $proxy_port;
+  protected $proxy_userpwd;
 
   /**
    * Set API URLS
@@ -263,13 +263,12 @@ class TwitterOAuth {
         }
     }
 
-    //#TODO F)X setProxy($host, $port=80, $id='', $pass='') に変更 CURLOPT_PROXYUSERPWD を使う
-    if ($this->requires_proxy) {
-      curl_setopt($ci, CURLOPT_PROXY, $this->proxy);
+    if ($this->proxy_host) {
+      curl_setopt($ci, CURLOPT_PROXY, $this->proxy_host);
+      curl_setopt($ci, CURLOPT_PROXYPORT, $this->proxy_port);
+      curl_setopt($ci, CURLOPT_PROXYUSERPWD, $this->proxy_userpwd);
     }
-
-	  curl_setopt($ci, CURLINFO_HEADER_OUT,true);var_dump($postfields);
-
+    curl_setopt($ci, CURLINFO_HEADER_OUT,true); var_dump($postfields);
     $this->setUrl( $ci, $url );
     $response = curl_exec($ci);
     $error = curl_error($ci);
@@ -292,16 +291,16 @@ class TwitterOAuth {
     return strlen($header);
   }
 
+
   /**
    * @link https://dev.twitter.com/docs/auth/application-only-auth
    *
    * @return OAuthRequest|string
    */
   function getBearerToken() {
-
     $this->generateEncodedBearerCredentials();
-
     $this->bearer_access_token = null;
+
     $this->get_bearer_token = true;
     $response = $this->post( "oauth2/token", array("grant_type" => "client_credentials"));
     $this->get_bearer_token = false;
@@ -324,16 +323,16 @@ class TwitterOAuth {
   /**
    * @link https://dev.twitter.com/docs/api/1.1/post/oauth2/invalidate_token
    *
-   * @param null $bearer_access_token
-   * @return array|mixed|OAuthRequest|string
+   * @return OAuthRequest|string
    */
-  public function invalidateBearerToken($bearer_access_token=null) {
-    $this->invalidate_bearer_token = true;
+  function invalidateBearerToken($bearer_access_token) {
     $this->generateEncodedBearerCredentials();
-    if ( $bearer_access_token ) $this->bearer_access_token = $bearer_access_token;
+    $this->bearer_access_token = $bearer_access_token;
 
+    $this->invalidate_bearer_token = true;
     $response = $this->post( "oauth2/invalidate_token", array("access_token" => $this->bearer_access_token));
     $this->invalidate_bearer_token = false;
+
     if ( isset($response->access_token) ) {
       $this->bearer_access_token = null;
       return urldecode($response->access_token);
@@ -375,7 +374,7 @@ class TwitterOAuth {
 
   protected function setBearerTokenHeaders( $ci )
   {
-    $headers = array( "Authorization: Bearer " . $this->bearer_access_token );
+    $headers = array( "Authorization: Bearer " . urlencode($this->bearer_access_token) );
     curl_setopt($ci, CURLOPT_HTTPHEADER, $headers);
   }
 
@@ -389,22 +388,16 @@ class TwitterOAuth {
     $this->url = $url;
   }
 
-
   /**
-   * set proxy properties
-   *
-   * @param string $_proxy
-   * @return bool
+   * @param string $proxy_host
+   * @param int $proxy_port
+   * @param string $proxy_username
+   * @param string $proxy_password
    */
-  function setProxy($_proxy) {
-    if (isset($_proxy) && $_proxy <> '' && $_proxy <> FALSE) {
-      $this->requires_proxy = TRUE;
-      $this->proxy = $_proxy;
-    } else {
-      $this->requires_proxy = FALSE;
-    }
-    return $this->requires_proxy;
+  function setProxy($proxy_host, $proxy_port=8080, $proxy_username='', $proxy_password='') {
+    $this->proxy_host = $proxy_host;
+    $this->proxy_port = $proxy_port;
+    $this->proxy_userpwd = $proxy_username .":".$proxy_password;
   }
-
 
 }
