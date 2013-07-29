@@ -11,12 +11,18 @@ namespace SnsTrend;
 
 class CustomPostType {
 
-	public $post_type = '';
+	public $post_type = 'trend';
 
 	public $meta_box;
 
-	public function __construct($post_type) {
-		$this->post_type = $post_type;
+	//#TODO ページ構造的にsns_trend_dataを持ったほうがいいかも
+
+	/**
+	 * @var TrendsModel
+	 */
+	public $trends;
+
+	public function __construct() {
 		$this->add_actions();
 
 		if(!class_exists('MetaBox'))
@@ -76,6 +82,11 @@ class CustomPostType {
 		add_action('init', array(&$this, 'register_post_type'), 0);
 		// タクソノミー追加
 		add_action('init', array(&$this, 'register_taxonomy'), 0);
+
+		// 管理画面一覧のタイトルに項目追加
+		add_filter( "manage_edit-{$this->post_type}_columns", array($this, 'manage_edit_columns') );
+		// trend_data の内容表示
+		add_action( 'manage_posts_custom_column', array($this, 'add_columns'),null, 2);
 
 		//add filter to insure the text Trend, or trend, is displayed when user updates a trend
 		add_filter('post_updated_messages', array(&$this, 'filter_post_updated_message'));
@@ -154,6 +165,42 @@ class CustomPostType {
 	 */
 	public function register_meta_box_cb() {
 	}
+
+
+	/**
+	 * 項目：trend_data追加
+	 *
+	 * @param array $columns
+	 * @return array
+	 */
+	function manage_edit_columns($columns) {
+		// titleの次にtrend_dataを入れる
+		$columns_new = array();
+		foreach ($columns as $key => $value) {
+			$columns_new[$key] = $value;
+			if ($key == 'title')
+				$columns_new['trend_data'] = "Trend Data";
+		}
+		return $columns_new;
+	}
+
+	/**
+	 * 項目：trend_dataの内容を表示
+	 *
+	 * @param string $column_name
+	 * @param int $post_id
+	 */
+	function add_columns($column_name, $post_id) {
+		if( $column_name == 'trend_data' ) {
+			$page = "sns_trend_data";//#TODO
+			//$hogehoge = get_post_meta( $post_id, '_hogehoge', true );
+			$page_path = "edit.php?post_type={$this->post_type}&page={$page}&action=save&post={$post_id}&wp_nonce=xxxxxxxxx";//#TODO
+
+			$admin_url = admin_url( $page_path );
+			printf('<a href="%s">データ取得</a>', $admin_url);
+		}
+	}
+
 
 	/**
 	 * filter: カスタム投稿のメッセージを変更

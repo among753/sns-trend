@@ -36,7 +36,7 @@ class SnsTrendTwitter {
 	/**
 	 * @var int Bearer Token 有効期限
 	 */
-	public $expired = 0;
+	public $expired = 3600;
 
 	/**
 	 * @var \TwitterOAuth
@@ -126,15 +126,20 @@ class SnsTrendTwitter {
 		$result = $this->connection->get('search/tweets', $param);
 		if (isset($result->errors)) {
 			var_dump($result);
-			var_dump(date_i18n("Y-m-d H:i:s",  current_time('TIMESTAMP') - $this->expired));
-			var_dump(date_i18n("Y-m-d H:i:s",  current_time('TIMESTAMP')));
-			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", current_time('TIMESTAMP') - $this->expired);
+			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", current_time('timestamp') - $this->expired);
 			update_option($this->option_name, $this->options);
-			return "Bearer Tokenが無効だったので有効期限を切らす";
+			$this->tweet = "Bearer Tokenが無効 リロードしてください。";
 		} else {
 			var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
-			return $this->tweet = $result;
+			$this->tweet = $result;
 		}
+		return $this->tweet;
+	}
+
+	public function invalidate() {
+		$bt = $this->connection->getBearerToken();
+		return $this->connection->invalidateBearerToken($bt);
+
 	}
 
 	public function set_db() {

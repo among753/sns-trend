@@ -10,6 +10,7 @@
 namespace SnsTrend;
 
 use Twitter_Autolink;
+use wpdb;
 
 class SnsTrendData {
 
@@ -19,8 +20,11 @@ class SnsTrendData {
 	public $data;
 
 	public $post_type = 'trend';
-	public $page = 'sns_trend_data_list';
+	public $page = 'sns_trend_data';
 
+	/**
+	 * @var TrendsModel
+	 */
 	public $trends;
 
 	public function __construct() {
@@ -50,34 +54,51 @@ class SnsTrendData {
 	}
 
 	public function admin_head_action() {
+		/**
+		 * @var $wpdb wpdb
+		 */
+		global $wpdb;
 
-		if (isset($_REQUEST['action'])) {
-			//var_dump($_REQUEST);
-			switch ($_REQUEST['action']) {
-				case 'search':
-					//#TODO twitter class ajaxでの呼び出しを考慮して作る nonce check
-					$twitter = new SnsTrendTwitter();
+		$twitter = new SnsTrendTwitter();
 
-					$param = array(
-						'q' => 'うわああああああああ',
-					);
-					$this->data = $twitter->search($param);
-					//var_dump($this->data);
-					//#TODO 重複を考慮してDBに保存
-					//#TODO データ整形
-					foreach ($this->data->statuses as $row) {
-						//単純にインサート 重複チェックは行う
-						//$this->trends->save($row);
-					}
+		if (!isset($_REQUEST['action']))
+			return $this->data = "actionなし";
 
-					break;
-				default :
-					break;
-			}
+		switch ($_REQUEST['action']) {
+			case 'save':
+				//#TODO twitter class ajaxでの呼び出しを考慮して作る nonce check
+				$query = $wpdb->prepare(
+					"aaa",//#TODO postsのtitleとpostmetaのtrend_keywordを取得する
+					$_REQUEST['post']
+				);
+				$wpdb->get_var($query);
+
+				$post_id = $_REQUEST['post'];
+
+				$param = array(
+					'q' => 'うわああああああああ',
+				);
+				$result = $twitter->search($param);
+				//#TODO 重複を考慮してDBに保存
+				//#TODO データ整形
+				foreach ($result->statuses as $row) {
+					//単純にインサート 重複チェックは行う
+					//$this->trends->save($row);
+				}
+				return $this->data = $result;
+				break;
+			case 'invalidate':
+				return $this->date = $twitter->invalidate();
+				break;
+			default:
+				return $this->data = "action?";
+				break;
 		}
+
 	}
 
 	public function render_trend_data_list() {
+		var_dump($this->data);
 
 		$this->render_twitter_list($this->data);
 

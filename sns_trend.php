@@ -38,7 +38,7 @@ class SnsTrend {
 		if(!class_exists('CustomPostType'))
 			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
 		// カスタムポストタイプ登録
-		$trend = new CustomPostType('trend');
+		$trend = new CustomPostType();
 
 		if(!class_exists('SnsTrendData'))
 			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";

@@ -268,7 +268,7 @@ class TwitterOAuth {
       curl_setopt($ci, CURLOPT_PROXYPORT, $this->proxy_port);
       curl_setopt($ci, CURLOPT_PROXYUSERPWD, $this->proxy_userpwd);
     }
-    curl_setopt($ci, CURLINFO_HEADER_OUT,true); var_dump($postfields);
+    //curl_setopt($ci, CURLINFO_HEADER_OUT,true); var_dump($postfields);
     $this->setUrl( $ci, $url );
     $response = curl_exec($ci);
     $error = curl_error($ci);
