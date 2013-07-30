@@ -66,24 +66,38 @@ class SnsTrendData {
 
 		switch ($_REQUEST['action']) {
 			case 'save':
-				//#TODO twitter class ajaxでの呼び出しを考慮して作る nonce check
-				$query = $wpdb->prepare(
-					"aaa",//#TODO postsのtitleとpostmetaのtrend_keywordを取得する
-					$_REQUEST['post']
-				);
-				$wpdb->get_var($query);
+				//#TODO twitter class ajaxでの呼び出しを考慮して作る
 
+				//#TODO nonce check
 				$post_id = $_REQUEST['post'];
 
+				$query = $wpdb->prepare(
+					"
+					SELECT
+					  *
+					FROM
+					  $wpdb->posts AS P
+					  LEFT JOIN
+					  $wpdb->postmeta AS PM
+					   ON P.ID = PM.post_id
+					  WHERE  P.ID = %d
+					  AND PM.meta_key = %s
+  					",
+					$post_id,
+					$option_name="trends_keywords"
+				);
+				$row = $wpdb->get_row($query);
+				var_dump($row->post_title, $row->meta_value);
+
 				$param = array(
-					'q' => 'うわああああああああ',
+					'q' => SnsTrendTwitter::consolidatedQuery($row->post_title, $row->meta_value),
 				);
 				$result = $twitter->search($param);
 				//#TODO 重複を考慮してDBに保存
 				//#TODO データ整形
 				foreach ($result->statuses as $row) {
 					//単純にインサート 重複チェックは行う
-					//$this->trends->save($row);
+					$this->trends->save($row);
 				}
 				return $this->data = $result;
 				break;

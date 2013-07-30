@@ -155,4 +155,9 @@ class SnsTrendTwitter {
 		return $this->tweet;
 	}
 
+	public static function consolidatedQuery($title, $keywords) {
+		return $query = $title . " OR " . preg_replace("/,/", " OR ", $keywords);
+	}
+
+
 }
