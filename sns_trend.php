@@ -22,7 +22,7 @@ class SnsTrend {
 	/**
 	 * @var string DBをアップデートする場合は更新
 	 */
-	public $db_version = "0.1.4";
+	public $db_version = "0.1.0";
 	public $option_db_version_name = 'sns_trend_db_version';
 
 	public function __construct() {

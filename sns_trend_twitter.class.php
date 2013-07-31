@@ -125,6 +125,7 @@ class SnsTrendTwitter {
 
 		$result = $this->connection->get('search/tweets', $param);
 		if (isset($result->errors)) {
+			//#TODO errorsの種類により分岐する　１９５
 			var_dump($result);
 			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", current_time('timestamp') - $this->expired);
 			update_option($this->option_name, $this->options);

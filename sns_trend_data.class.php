@@ -84,13 +84,15 @@ class SnsTrendData {
 					  AND PM.meta_key = %s
   					",
 					$post_id,
-					$option_name="trends_keywords"
+					$option_name="trend_keywords"
 				);
+
 				$row = $wpdb->get_row($query);
-				var_dump($row->post_title, $row->meta_value);
+				var_dump($row);
 
 				$param = array(
 					'q' => SnsTrendTwitter::consolidatedQuery($row->post_title, $row->meta_value),
+					'count' => '3', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
 				$result = $twitter->search($param);
 				//#TODO 重複を考慮してDBに保存

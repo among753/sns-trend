@@ -97,7 +97,7 @@ class TrendsModel {
           trend_data text,
           trend_created datetime,
           trend_modified datetime,
-          PRIMARY KEY  (id)
+          PRIMARY KEY  (trend_id)
         )';
 		require_once ABSPATH."wp-admin/includes/upgrade.php";
 		return $result = dbDelta($sql);
