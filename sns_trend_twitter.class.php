@@ -169,9 +169,7 @@ class SnsTrendTwitter {
 	public function save($post_id)
 	{
 		foreach ($this->tweets->statuses as $tweet) {
-			//#TODO 重複チェック
 			//#TODO データ整形
-
 			$row = array(
 				$this->trends->post_id => $post_id,
 				$this->trends->trend_type => $this->type,
@@ -179,10 +177,11 @@ class SnsTrendTwitter {
 				$this->trends->trend_created_at => $tweet->created_at,
 				$this->trends->trend_text => $tweet->text,
 				$this->trends->trend_user_id => $tweet->user->id,
-				$this->trends->trend_data => $tweet,
-				$this->trends->created => current_time('mysql'),
-				$this->trends->modified => current_time('mysql'),
+				$this->trends->trend_data => serialize($tweet),
+//				$this->trends->created => current_time('mysql'),
+//				$this->trends->modified => current_time('mysql'),
 			);
+			//var_dump($row);
 
 			$this->trends->save($row);
 		}

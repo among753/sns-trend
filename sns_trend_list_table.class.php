@@ -166,7 +166,7 @@ class SnsTrendListTable extends WP_List_Table {
 			$this->model->trend_text       => 'TREND_TEXT',
 			$this->model->trend_url        => 'TREND_URL',
 			$this->model->trend_user_id    => 'TREND_USER_ID',
-			$this->model->trend_data       => 'TREND_DATA',
+//			$this->model->trend_data       => 'TREND_DATA',
 //			$this->model->created          => 'CREATED',
 //			$this->model->modified         => 'MODIFIED'
 		);
@@ -303,8 +303,6 @@ class SnsTrendListTable extends WP_List_Table {
 		//var_dump($data);
 		//$data = $this->example_data;
 
-
-
 		/**
 		 * This checks for sorting input and sorts the data in our array accordingly.
 		 *
@@ -314,7 +312,7 @@ class SnsTrendListTable extends WP_List_Table {
 		 * sorting technique would be unnecessary.
 		 */
 		function usort_reorder($a,$b){
-			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'id'; //If no sort, default to title
+			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'post_id'; //If no sort, default to title
 			$order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc'; //If no order, default to asc
 			$result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
 			return ($order==='asc') ? $result : -$result; //Send final sort direction to usort

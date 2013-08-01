@@ -59,6 +59,10 @@ class SnsTrendData {
 		 */
 		global $wpdb;
 
+		//#TODO $_GETの処理
+		
+
+
 		$twitter = new SnsTrendTwitter();
 
 		if (!isset($_REQUEST['action']))
@@ -88,7 +92,7 @@ class SnsTrendData {
 				);
 
 				$row = $wpdb->get_row($query);
-				var_dump($row);
+				//var_dump($row);
 
 				$param = array(
 					'q' => SnsTrendTwitter::consolidatedQuery($row->post_title, $row->meta_value),
@@ -115,12 +119,10 @@ class SnsTrendData {
 
 		$this->render_twitter_list($this->data);
 
-
-
 		//#TODO データの一覧を出力
 		$sns_trend_list_table = new SnsTrendListTable($this->trends);
 		$param = array(
-			'post_id' => 1,
+			'post_id' => $_REQUEST['post'],
 			'output_type' => 'ARRAY_A'
 		);
 		$sns_trend_list_table->prepare_items($param);
