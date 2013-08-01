@@ -14,9 +14,10 @@ use TwitterOAuth;
 
 class SnsTrendTwitter {
 
-	public $keyword             = 'ワードプレス';
-
-	public $tweet               = array();
+	/**
+	 * @var TwitterOAuth
+	 */
+	public $connection;
 
 	public $option_name         = 'sns_trend_twitter';
 	public $options = array(
@@ -38,10 +39,16 @@ class SnsTrendTwitter {
 	 */
 	public $expired = 3600;
 
+
+
+	public $tweets               = array();
+
 	/**
-	 * @var \TwitterOAuth
+	 * @var TrendsModel
 	 */
-	public $connection;
+	public $trends;
+
+	public $type = 'twitter';
 
 	public function __construct() {
 
@@ -50,6 +57,10 @@ class SnsTrendTwitter {
 
 		if (!class_exists('Twitter_Autolink'))
 			require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
+
+		if(!class_exists('TrendsModel'))
+			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
+		$this->trends = new TrendsModel();
 
 		// optionから取得しセット
 		$this->setProperty();
@@ -129,12 +140,12 @@ class SnsTrendTwitter {
 			var_dump($result);
 			$this->options['bearer_access_token_expired'] = date_i18n("Y-m-d H:i:s", current_time('timestamp') - $this->expired);
 			update_option($this->option_name, $this->options);
-			$this->tweet = "Bearer Tokenが無効 リロードしてください。";
+			$this->tweets = "Bearer Tokenが無効 リロードしてください。";
 		} else {
 			var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
-			$this->tweet = $result;
+			$this->tweets = $result;
 		}
-		return $this->tweet;
+		return $this->tweets;
 	}
 
 	public function invalidate() {
@@ -143,21 +154,38 @@ class SnsTrendTwitter {
 
 	}
 
-	public function set_db() {
-		//#TODO set_db() trendsテーブルにデータを格納 どこに持たすか trend_data.class
-
-	}
-
 	/**
 	 * @return array
 	 */
-	public function getTweet()
+	public function gettweets()
 	{
-		return $this->tweet;
+		return $this->tweets;
 	}
 
 	public static function consolidatedQuery($title, $keywords) {
 		return $query = $title . " OR " . preg_replace("/,/", " OR ", $keywords);
+	}
+
+	public function save($post_id)
+	{
+		foreach ($this->tweets->statuses as $tweet) {
+			//#TODO 重複チェック
+			//#TODO データ整形
+
+			$row = array(
+				$this->trends->post_id => $post_id,
+				$this->trends->trend_type => $this->type,
+				$this->trends->trend_id => $tweet->id,
+				$this->trends->trend_created_at => $tweet->created_at,
+				$this->trends->trend_text => $tweet->text,
+				$this->trends->trend_user_id => $tweet->user->id,
+				$this->trends->trend_data => $tweet,
+				$this->trends->created => current_time('mysql'),
+				$this->trends->modified => current_time('mysql'),
+			);
+
+			$this->trends->save($row);
+		}
 	}
 
 

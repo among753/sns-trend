@@ -95,12 +95,9 @@ class SnsTrendData {
 					'count' => '3', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
 				$result = $twitter->search($param);
-				//#TODO 重複を考慮してDBに保存
-				//#TODO データ整形
-				foreach ($result->statuses as $row) {
-					//単純にインサート 重複チェックは行う
-					$this->trends->save($row);
-				}
+
+				$twitter->save($post_id);
+
 				return $this->data = $result;
 				break;
 			case 'invalidate':
@@ -114,7 +111,7 @@ class SnsTrendData {
 	}
 
 	public function render_trend_data_list() {
-		var_dump($this->data);
+		//var_dump($this->data);
 
 		$this->render_twitter_list($this->data);
 

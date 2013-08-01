@@ -10,6 +10,7 @@
 namespace SnsTrend;
 
 use WP_List_Table;
+use wpdb;
 
 if(!class_exists('WP_List_Table'))
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
@@ -26,6 +27,7 @@ class SnsTrendListTable extends WP_List_Table {
 	 * REQUIRED. Set up a constructor that references the parent constructor. We
 	 * use the parent reference to set some default configs.
 	 *
+	 * @param string $post_type
 	 * @param TrendsModel $model model class
 	 */
 	function __construct($model){
@@ -66,6 +68,9 @@ class SnsTrendListTable extends WP_List_Table {
 	 **************************************************************************/
 	function column_default($item, $column_name){
 		switch($column_name){
+			case $this->model->trend_data:
+				$trend_data = unserialize($item[$column_name]);
+				return $trend_data->text;
 			case $this->model->created:
 			case $this->model->modified:
 				return print_r($item,true);
@@ -91,12 +96,23 @@ class SnsTrendListTable extends WP_List_Table {
 	 * @param array $item A singular item (one full row's worth of data)
 	 * @return string Text to be placed inside the column <td> (movie title only)
 	 **************************************************************************/
-	function column_trend_id($item){
+	function column_id($item){
 
 		//Build row actions
 		$actions = array(
-			'edit'      => sprintf('<a href="?page=%s&action=%s&%s=%s">Edit</a>', $_REQUEST['page'], 'edit', 'trend', $item[$this->model->id]),
-			'delete'    => sprintf('<a href="?page=%s&action=%s&%s=%s">Delete</a>', $_REQUEST['page'], 'delete', 'trend', $item[$this->model->id]),
+			'edit'      => sprintf(
+				'<a href="?post_type=%1$s&page=%2$s&action=%3$s&id=%4$s">Edit</a>', $_REQUEST['post_type'],
+				$_REQUEST['page'],
+				'edit',
+				$item[$this->model->id]
+			),
+			'delete'    => sprintf(
+				'<a href="?post_type=%1$s&page=%2$s&action=%3$s&id=%4$s">Delete</a>',
+				$_REQUEST['post_type'],
+				$_REQUEST['page'],
+				'delete',
+				$item[$this->model->id]
+			),
 		);
 
 		//Return the title contents
@@ -141,11 +157,18 @@ class SnsTrendListTable extends WP_List_Table {
 	function get_columns(){
 		$columns = array(
 			'cb'        => '<input type="checkbox" />', //Render a checkbox instead of text
-			'trend_id'     => 'ID',
-			'post_id'     => 'POST_ID',
-			'trend_data'  => 'DATA',
-			'trend_created'    => 'CREATED',
-			'trend_modified'  => 'MODIFIED'
+			$this->model->id               => 'ID',
+			$this->model->post_id          => 'POST_ID',
+			$this->model->trend_type         => 'TREND_TYPE',
+			$this->model->trend_id         => 'TREND_ID',
+			$this->model->trend_created_at => 'TREND_CREATED_AT',
+			$this->model->trend_title      => 'TREND_TITLE',
+			$this->model->trend_text       => 'TREND_TEXT',
+			$this->model->trend_url        => 'TREND_URL',
+			$this->model->trend_user_id    => 'TREND_USER_ID',
+			$this->model->trend_data       => 'TREND_DATA',
+//			$this->model->created          => 'CREATED',
+//			$this->model->modified         => 'MODIFIED'
 		);
 		return $columns;
 	}
@@ -166,11 +189,11 @@ class SnsTrendListTable extends WP_List_Table {
 	 **************************************************************************/
 	function get_sortable_columns() {
 		$sortable_columns = array(
-			'trend_id'     => array('trend_id',false),     //true means it's already sorted
-			'post_id'    => array('post_id',false),
-			'trend_data'  => array('trend_data',false),
-			'trend_created'  => array('trend_created',false),
-			'trend_modified'  => array('trend_modified',false)
+			$this->model->id          =>  array('trend_id',false), //true means it's already sorted
+			$this->model->post_id     => array('post_id',false),
+			$this->model->trend_data  => array('trend_data',false),
+			$this->model->created     => array('trend_created',false),
+			$this->model->modified    => array('trend_modified',false)
 		);
 		return $sortable_columns;
 	}
@@ -222,7 +245,7 @@ class SnsTrendListTable extends WP_List_Table {
 	 * $this->set_pagination_args(), although the following properties and methods
 	 * are frequently interacted with here...
 	 *
-	 * @global WPDB $wpdb
+	 * @global wpdb $wpdb
 	 * @uses $this->_column_headers
 	 * @uses $this->items
 	 * @uses $this->get_columns()
@@ -291,7 +314,7 @@ class SnsTrendListTable extends WP_List_Table {
 		 * sorting technique would be unnecessary.
 		 */
 		function usort_reorder($a,$b){
-			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'trend_id'; //If no sort, default to title
+			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'id'; //If no sort, default to title
 			$order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc'; //If no order, default to asc
 			$result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
 			return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
@@ -352,7 +375,4 @@ class SnsTrendListTable extends WP_List_Table {
 		) );
 	}
 
-
 }
-
-
