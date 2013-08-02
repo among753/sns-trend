@@ -128,10 +128,11 @@ class SnsTrendData {
 
 		$sns_trend_list_table = new SnsTrendListTable($this->trends);
 		$param = array(
-//			'post_id' => $_REQUEST['post']
-			'post_id' => "193",
 			'trend_type' => 'twitter'
 		);
+		if ( $_REQUEST['post'] ) array_push($param, array('post_id' => $_REQUEST['post']));
+
+
 		$sns_trend_list_table->prepare_items($param);
 
 		global $title;

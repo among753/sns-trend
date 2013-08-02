@@ -223,7 +223,7 @@ CREATE TABLE ".$this->table_name." (
 			"SELECT * FROM {$this->table_name}" . $this->get_where($param),
 			$param
 		);
-//		var_dump($query);
+		var_dump($query);
 		return $this->wpdb->get_results($query, $output_type);
 	}
 
