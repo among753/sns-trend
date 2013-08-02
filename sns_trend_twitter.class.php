@@ -11,6 +11,7 @@ namespace SnsTrend;
 
 use WP_HTTP_Proxy;
 use TwitterOAuth;
+use Twitter_Autolink;
 
 class SnsTrendTwitter {
 
@@ -37,7 +38,7 @@ class SnsTrendTwitter {
 	/**
 	 * @var int Bearer Token 有効期限
 	 */
-	public $expired = 3600;
+	public $expired = 900;
 
 
 
@@ -72,13 +73,35 @@ class SnsTrendTwitter {
 		$proxy = new WP_HTTP_Proxy();
 		if ( $proxy->is_enabled() ) $this->connection->setProxy($proxy->host(), $proxy->port());
 
-		//#TODO Bearer Token optionsに保存 sns_trend_twitter['bearer_access_token'] sns_trend_twitter['bearer_access_token_expired']
+	}
+
+	protected function setProperty() {
+		if ( $options = get_option($this->option_name) ) {
+			$this->options = array_merge($this->options, $options);
+			foreach ($this->options as $key => $value) {
+				$this->$key = $value;
+			}
+			//echo "options:"; var_dump($this->options);//#TO#DO DEBUG
+			if ($this->consumer_key && $this->consumer_secret) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Bearer Token optionsに保存
+	 * sns_trend_twitter['bearer_access_token']
+	 * sns_trend_twitter['bearer_access_token_expired']
+	 */
+	public function getAccessToken() {
+		//
 		/* OAuth 2 Bearer Token Use Application-only authentication */
 		// 期限切れを確認
 		if ((int)strtotime($this->bearer_access_token_expired) + $this->expired < date_i18n('U')) {
 
 			$inv = $this->connection->invalidateBearerToken($this->connection->getBearerToken());
-			echo "invalidateBearerToken():"; var_dump($inv);
+			echo "invalidateBearerToken():"; var_dump($inv);//#TODO DEBUG
 			//var_dump($this->connection);
 
 			// 再発行
@@ -89,27 +112,13 @@ class SnsTrendTwitter {
 				$this->options['bearer_access_token_expired'] = current_time('mysql');
 				update_option($this->option_name, $this->options);
 			}
-			echo "再発行："; var_dump($this->bearer_access_token);
+			echo "再発行："; var_dump($this->bearer_access_token);//#TODO DEBUG
 
 		} else {
 			$this->connection->setBearerToken($this->bearer_access_token);
-			echo "optionsからセット："; var_dump($this->bearer_access_token);
+			echo "optionsからセット："; var_dump($this->bearer_access_token);//#TODO DEBUG
 		}
 
-	}
-
-	protected function setProperty() {
-		if ( $options = get_option($this->option_name) ) {
-			$this->options = array_merge($this->options, $options);
-			foreach ($this->options as $key => $value) {
-				$this->$key = $value;
-			}
-			echo "options:"; var_dump($this->options);
-			if ($this->consumer_key && $this->consumer_secret) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 
@@ -157,7 +166,7 @@ class SnsTrendTwitter {
 	/**
 	 * @return array
 	 */
-	public function gettweets()
+	public function getTweets()
 	{
 		return $this->tweets;
 	}
@@ -166,26 +175,42 @@ class SnsTrendTwitter {
 		return $query = $title . " OR " . preg_replace("/,/", " OR ", $keywords);
 	}
 
-	public function save($post_id)
+	public function save($post)
 	{
 		foreach ($this->tweets->statuses as $tweet) {
 			//#TODO データ整形
+
 			$row = array(
-				$this->trends->post_id => $post_id,
+				$this->trends->post_id => $post->ID,
 				$this->trends->trend_type => $this->type,
-				$this->trends->trend_id => $tweet->id,
+				$this->trends->trend_id => $tweet->id_str,//32bitOSではint型でbigintがオーバーフローする・・
 				$this->trends->trend_created_at => $tweet->created_at,
+				$this->trends->trend_title => $post->post_title,
 				$this->trends->trend_text => $tweet->text,
 				$this->trends->trend_user_id => $tweet->user->id,
 				$this->trends->trend_data => serialize($tweet),
 //				$this->trends->created => current_time('mysql'),
 //				$this->trends->modified => current_time('mysql'),
 			);
-			//var_dump($row);
+//			var_dump($row);
 
 			$this->trends->save($row);
 		}
 	}
 
+	public function render_twitter_list($tweets=null) {
+		if (!$tweets) $this->tweets;
+		if (!$tweets) return;
+//		var_dump($tweets);
 
+		foreach($tweets->statuses as $status){
+			$text = Twitter_Autolink::create($status->text)
+				->setNoFollow(false)
+				->addLinks();
+			echo '<li>'.PHP_EOL;
+			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$status->user->screen_name.'" target="_blank"><img src="'.$status->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>'.PHP_EOL;
+			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$status->created_at.'</span></p></div>'.PHP_EOL;
+			echo "</li>".PHP_EOL;
+		}
+	}
 }

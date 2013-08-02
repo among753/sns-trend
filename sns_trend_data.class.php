@@ -9,7 +9,7 @@
 
 namespace SnsTrend;
 
-use Twitter_Autolink;
+
 use wpdb;
 
 class SnsTrendData {
@@ -26,6 +26,9 @@ class SnsTrendData {
 	 * @var TrendsModel
 	 */
 	public $trends;
+
+	/* @var SnsTrendTwitter */
+	public $twitter;
 
 	public function __construct() {
 
@@ -48,32 +51,36 @@ class SnsTrendData {
 		// カスタムのトップレベルメニューにサブメニューを追加:
 		$hook_suffix = add_submenu_page("edit.php?post_type={$this->post_type}", __('Trend Data'), __('Trend Data'), 'administrator', $this->page, array($this, 'render_trend_data_list'));
 
-		// edit.php?post_type=trend&page=sns_trend_data_list
+		// edit.php?post_type=trend&page=sns_trend_data
 		add_action("admin_head-{$hook_suffix}", array($this, 'admin_head_action'));
 
 	}
 
+
+	/**
+	 *
+	 *
+	 * @return array|\OAuthRequest|string
+	 */
 	public function admin_head_action() {
-		/**
-		 * @var $wpdb wpdb
-		 */
+		/** @var $wpdb wpdb */
 		global $wpdb;
 
+		$this->twitter = new SnsTrendTwitter();
+
+
 		//#TODO $_GETの処理
-		
+		$action = $_REQUEST['action'];
+		$post_id = ($_REQUEST['post']) ? $_REQUEST['post'] : "" ;
 
-
-		$twitter = new SnsTrendTwitter();
-
-		if (!isset($_REQUEST['action']))
-			return $this->data = "actionなし";
-
-		switch ($_REQUEST['action']) {
+		switch ($action) {
 			case 'save':
+				if (!$post_id) return;
 				//#TODO twitter class ajaxでの呼び出しを考慮して作る
 
 				//#TODO nonce check
-				$post_id = $_REQUEST['post'];
+
+				$this->twitter->getAccessToken();
 
 				$query = $wpdb->prepare(
 					"
@@ -92,38 +99,38 @@ class SnsTrendData {
 				);
 
 				$row = $wpdb->get_row($query);
-				//var_dump($row);
+				//echo "row:";var_dump($row);
 
 				$param = array(
 					'q' => SnsTrendTwitter::consolidatedQuery($row->post_title, $row->meta_value),
 					'count' => '3', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
-				$result = $twitter->search($param);
+				$result = $this->twitter->search($param);
 
-				$twitter->save($post_id);
+				$this->twitter->save($row);
 
 				return $this->data = $result;
-				break;
 			case 'invalidate':
-				return $this->date = $twitter->invalidate();
-				break;
+				return $this->data = $this->twitter->invalidate();
 			default:
-				return $this->data = "action?";
-				break;
+				return $this->data = "";
 		}
 
 	}
 
 	public function render_trend_data_list() {
-		//var_dump($this->data);
 
-		$this->render_twitter_list($this->data);
+		//#TODO DEBUG twitterからデータを取得した時はDEBUG表示
+		$this->twitter->render_twitter_list($this->data);
 
 		//#TODO データの一覧を出力
+		echo "<strong>#TODO pagenationのパラメーターにsaveがついて毎回保存しちゃう。</strong>";//#TODO
+
 		$sns_trend_list_table = new SnsTrendListTable($this->trends);
 		$param = array(
-			'post_id' => $_REQUEST['post'],
-			'output_type' => 'ARRAY_A'
+//			'post_id' => $_REQUEST['post']
+			'post_id' => "193",
+			'trend_type' => 'twitter'
 		);
 		$sns_trend_list_table->prepare_items($param);
 
@@ -144,19 +151,6 @@ class SnsTrendData {
 			</form>
 		</div>
 		<?php
-	}
-
-	public function render_twitter_list($data) {
-		if (!$data) return false;
-		foreach($data->statuses as $status){
-			$text = Twitter_Autolink::create($status->text)
-				->setNoFollow(false)
-				->addLinks();
-			echo '<li>'.PHP_EOL;
-			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$status->user->screen_name.'" target="_blank"><img src="'.$status->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>'.PHP_EOL;
-			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$status->created_at.'</span></p></div>'.PHP_EOL;
-			echo "</li>".PHP_EOL;
-		}
 	}
 
 }

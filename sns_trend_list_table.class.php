@@ -159,7 +159,7 @@ class SnsTrendListTable extends WP_List_Table {
 			'cb'        => '<input type="checkbox" />', //Render a checkbox instead of text
 			$this->model->id               => 'ID',
 			$this->model->post_id          => 'POST_ID',
-			$this->model->trend_type         => 'TREND_TYPE',
+			$this->model->trend_type       => 'TREND_TYPE',
 			$this->model->trend_id         => 'TREND_ID',
 			$this->model->trend_created_at => 'TREND_CREATED_AT',
 			$this->model->trend_title      => 'TREND_TITLE',
@@ -189,11 +189,18 @@ class SnsTrendListTable extends WP_List_Table {
 	 **************************************************************************/
 	function get_sortable_columns() {
 		$sortable_columns = array(
-			$this->model->id          =>  array('trend_id',false), //true means it's already sorted
-			$this->model->post_id     => array('post_id',false),
-			$this->model->trend_data  => array('trend_data',false),
-			$this->model->created     => array('trend_created',false),
-			$this->model->modified    => array('trend_modified',false)
+			$this->model->id               => array($this->model->id,true), //true means it's already sorted
+			$this->model->post_id          => array($this->model->post_id,false),
+			$this->model->trend_type       => array($this->model->trend_type,false),
+			$this->model->trend_id         => array($this->model->trend_id,false),
+			$this->model->trend_created_at => array($this->model->trend_created_at,false),
+			$this->model->trend_title      => array($this->model->trend_title,false),
+			$this->model->trend_text       => array($this->model->trend_text,false),
+			$this->model->trend_url        => array($this->model->trend_url,false),
+			$this->model->trend_user_id    => array($this->model->trend_user_id,false),
+//			$this->model->trend_data       => array($this->model->trend_data,false),
+//			$this->model->created          => array($this->model->created,false),
+//			$this->model->modified         => array($this->model->modified,false),
 		);
 		return $sortable_columns;
 	}
@@ -256,6 +263,8 @@ class SnsTrendListTable extends WP_List_Table {
 	function prepare_items($param) {
 		global $wpdb; //This is used only if making any database queries
 
+		//#TODO いまtable dataを全件取得してるから必要な分だけ取得するように変える
+
 		/**
 		 * First, lets decide how many records per page to show
 		 */
@@ -299,8 +308,8 @@ class SnsTrendListTable extends WP_List_Table {
 		 * use sort and pagination data to build a custom query instead, as you'll
 		 * be able to use your precisely-queried data immediately.
 		 */
-		$data = $this->model->get($param);
-		//var_dump($data);
+		$data = $this->model->get($param, 'ARRAY_A');
+//		var_dump($data);
 		//$data = $this->example_data;
 
 		/**
@@ -312,8 +321,8 @@ class SnsTrendListTable extends WP_List_Table {
 		 * sorting technique would be unnecessary.
 		 */
 		function usort_reorder($a,$b){
-			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'post_id'; //If no sort, default to title
-			$order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc'; //If no order, default to asc
+			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'id'; //If no sort, default to title
+			$order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'desc'; //If no order, default to asc
 			$result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
 			return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
 		}
@@ -344,7 +353,7 @@ class SnsTrendListTable extends WP_List_Table {
 		 * without filtering. We'll need this later, so you should always include it
 		 * in your own package classes.
 		 */
-		$total_items = count($data);
+		$total_items = count($data);//#TODO データの数をDBから取得すること
 
 
 		/**

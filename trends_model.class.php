@@ -212,45 +212,37 @@ CREATE TABLE ".$this->table_name." (
 
 	/**
 	 * $param 条件で絞り込み
-	 * @param $param
+	 *
+	 * @param null $param
+	 * @param string $output_type
+	 * @return mixed
 	 */
-	public function get($param) {
+	public function get($param=null, $output_type='object') {
 
 		$query = $this->wpdb->prepare(
-			"SELECT * FROM {$this->table_name} WHERE {$this->post_id} = %d",
-			$param[$this->post_id]
+			"SELECT * FROM {$this->table_name}" . $this->get_where($param),
+			$param
 		);
-
-		return $this->wpdb->get_results($query, $param['output_type']);
+//		var_dump($query);
+		return $this->wpdb->get_results($query, $output_type);
 	}
 
 	/**
 	 * @param $row
 	 */
 	public function save($row) {
-		//svar_dump($row);	//$row = array();
+		//var_dump($row);	//$row = array();
 
 		$default = array();
 		$format = array();
 		foreach ($this->attribute_type as $column => $attribute) {
 			if ($attribute['default'] !== 'AUTO_INCREMENT') {
 				$default[$column] = $attribute['default'];
-				switch ($attribute['db_attributes'][0]) {
-					case 'NUMERIC':
-						$format[$column] = '%d';
-						break;
-					case 'TEXT':
-						$format[$column] = '%s';
-						break;
-					case 'FLOAT':
-						$format[$column] = '%f';
-						break;
-				}
+				$format[$column] = $this->get_db_placeholder($column);
 			}
 		}
 		$row = array_merge($default, $row);
-		var_dump($row,$format);
-
+//		var_dump($row,$format);
 
 		$table_exist = $this->wpdb->get_var($this->wpdb->prepare(
 			"SELECT count($this->id) FROM $this->table_name WHERE $this->trend_type = %s AND $this->trend_id = %d",
@@ -273,6 +265,36 @@ CREATE TABLE ".$this->table_name." (
 		//$this->wpdb->update( $this->table_name, array( 'column1' => 'value1', 'column2' => 'value2' ), array( 'ID' => 1 ), array( '%s', '%d' ), array( '%d' ) );
 		//#TODO エラー処理 エラー返す
 		return $result = true;
+	}
+
+	/**
+	 * $wpdb->prepare()用のplaceholderを返す。
+	 * 32bitOSでBIGINTが扱えないのでstring型として扱う。
+	 *
+	 * @param $column
+	 * @return string
+	 */
+	public function get_db_placeholder($column) {
+		list($type, $type2) = $this->attribute_type[$column]['db_attributes'];
+		if ( $type=='TEXT' || $type2=='BIGINT' )
+			return '%s';
+		elseif ($type2=='FLOAT')
+			return '%f';
+		else
+			return '$d';
+	}
+
+	public function get_where($param) {
+		$where='';
+		if (is_array($param) && $param) {
+			$where=" WHERE ";
+			foreach ($param as $key => $value) {
+				if ( $where != " WHERE " ) $where .= " AND ";
+				if (is_string($value))
+					$where .= $key . " = " . $this->get_db_placeholder($key);
+			}
+		}
+		return $where;
 	}
 
 }
