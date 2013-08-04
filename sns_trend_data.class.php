@@ -70,8 +70,8 @@ class SnsTrendData {
 
 
 		//#TODO $_GETの処理
-		$action = $_REQUEST['action'];
-		$post_id = ($_REQUEST['post']) ? $_REQUEST['post'] : "" ;
+		$action = (isset($_REQUEST['action'])) ? $_REQUEST['action'] : "";
+		$post_id = (isset($_REQUEST['post'])) ? $_REQUEST['post'] : "" ;
 
 		switch ($action) {
 			case 'save':
@@ -120,20 +120,24 @@ class SnsTrendData {
 
 	public function render_trend_data_list() {
 
+//		var_dump($this->data);
 		//#TODO DEBUG twitterからデータを取得した時はDEBUG表示
-		$this->twitter->render_twitter_list($this->data);
+		if ($this->data)
+			SnsTrendTwitter::render_twitter_list($this->data->statuses);
 
 		//#TODO データの一覧を出力
 		echo "<strong>#TODO pagenationのパラメーターにsaveがついて毎回保存しちゃう。</strong>";//#TODO
 
-		$sns_trend_list_table = new SnsTrendListTable($this->trends);
+		$sns_trend_list_table = new SnsTrendListTable();
 		$param = array(
 			'trend_type' => 'twitter'
 		);
-		if ( $_REQUEST['post'] ) array_push($param, array('post_id' => $_REQUEST['post']));
+
+		if ( isset($_REQUEST['post']) ) $param['post_id'] = $_REQUEST['post'];
 
 
-		$sns_trend_list_table->prepare_items($param);
+		$sns_trend_list_table->set_prepare_items_param($param);
+		$sns_trend_list_table->prepare_items();
 
 		global $title;
 		?>

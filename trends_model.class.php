@@ -20,6 +20,7 @@ namespace SnsTrend;
 	`trend_modified` DATETIME NOT NULL,
 	PRIMARY KEY  (`id`)) ENGINE=MyISAM;
 */
+
 use wpdb;
 
 /**
@@ -217,14 +218,15 @@ CREATE TABLE ".$this->table_name." (
 	 * @param string $output_type
 	 * @return mixed
 	 */
-	public function get($param=null, $output_type='object') {
+	public function get( $wheres = null, $orderby=null, $limit=null, $output = OBJECT ) {
 
+		//#TODO orderby limit を追加する
 		$query = $this->wpdb->prepare(
-			"SELECT * FROM {$this->table_name}" . $this->get_where($param),
-			$param
+			"SELECT * FROM {$this->table_name}" . $this->get_where($wheres),
+			$wheres
 		);
-		var_dump($query);
-		return $this->wpdb->get_results($query, $output_type);
+//		var_dump($query);
+		return $this->wpdb->get_results($query, $output);
 	}
 
 	/**
@@ -284,16 +286,16 @@ CREATE TABLE ".$this->table_name." (
 			return '$d';
 	}
 
-	public function get_where($param) {
+	public function get_where($params) {
 		$where='';
-		if (is_array($param) && $param) {
+		if (is_array($params) && $params) {
 			$where=" WHERE ";
-			foreach ($param as $key => $value) {
+			foreach ($params as $key => $value) {
 				if ( $where != " WHERE " ) $where .= " AND ";
-				if (is_string($value))
-					$where .= $key . " = " . $this->get_db_placeholder($key);
+				$where .= $key . " = " . $this->get_db_placeholder($key);
 			}
 		}
+//		var_dump($params, $where);
 		return $where;
 	}
 

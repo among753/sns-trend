@@ -11,6 +11,7 @@ namespace SnsTrend;
 
 use WP_List_Table;
 use wpdb;
+use stdClass;
 
 if(!class_exists('WP_List_Table'))
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
@@ -24,16 +25,34 @@ class SnsTrendListTable extends WP_List_Table {
 	public $model;
 
 	/**
+	 * @var SnsTrendTwitter
+	 */
+	protected $twitter;
+
+	/**
+	 * @var array
+	 */
+	protected $prepare_items_param;
+
+	/**
 	 * REQUIRED. Set up a constructor that references the parent constructor. We
 	 * use the parent reference to set some default configs.
 	 *
 	 * @param string $post_type
 	 * @param TrendsModel $model model class
 	 */
-	function __construct($model){
+	function __construct(){
 		global $status, $page;
 
-		$this->model = $model;
+		if(!class_exists('TrendsModel'))
+			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
+		$this->model = new TrendsModel();
+
+
+		if(!class_exists('SnsTrendTwitter'))
+			require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
+//		$this->twitter = new SnsTrendTwitter();
+
 
 		//Set parent defaults
 		parent::__construct( array(
@@ -74,6 +93,8 @@ class SnsTrendListTable extends WP_List_Table {
 			case $this->model->created:
 			case $this->model->modified:
 				return print_r($item,true);
+			case $this->model->trend_title:
+				return sprintf('%1$s <span style="color:silver">(post_id:%2$s)</span>', $item[$column_name], $item[$this->model->post_id]);
 			default:
 				return $item[$column_name]; //Show the whole array for troubleshooting purposes
 		}
@@ -123,6 +144,16 @@ class SnsTrendListTable extends WP_List_Table {
 		);
 	}
 
+	function column_trend_user_id($item) {
+		$tweet = unserialize($item[$this->model->trend_data]);
+
+		return sprintf('<p class="twitter_icon"><a href="http://twitter.com/%1$s" target="_blank"><img src="%2$s" alt="icon" width="46" height="46" /></a>%3$s(@%1$s)</p>',
+			$tweet->user->screen_name,
+			$tweet->user->profile_image_url,
+			$tweet->user->name
+		);
+	}
+
 	/** ************************************************************************
 	 * REQUIRED if displaying checkboxes or using bulk actions! The 'cb' column
 	 * is given special treatment when columns are processed. It ALWAYS needs to
@@ -158,7 +189,7 @@ class SnsTrendListTable extends WP_List_Table {
 		$columns = array(
 			'cb'        => '<input type="checkbox" />', //Render a checkbox instead of text
 			$this->model->id               => 'ID',
-			$this->model->post_id          => 'POST_ID',
+//			$this->model->post_id          => 'POST_ID',
 			$this->model->trend_type       => 'TREND_TYPE',
 			$this->model->trend_id         => 'TREND_ID',
 			$this->model->trend_created_at => 'TREND_CREATED_AT',
@@ -190,7 +221,7 @@ class SnsTrendListTable extends WP_List_Table {
 	function get_sortable_columns() {
 		$sortable_columns = array(
 			$this->model->id               => array($this->model->id,true), //true means it's already sorted
-			$this->model->post_id          => array($this->model->post_id,false),
+//			$this->model->post_id          => array($this->model->post_id,false),
 			$this->model->trend_type       => array($this->model->trend_type,false),
 			$this->model->trend_id         => array($this->model->trend_id,false),
 			$this->model->trend_created_at => array($this->model->trend_created_at,false),
@@ -260,7 +291,7 @@ class SnsTrendListTable extends WP_List_Table {
 	 * @uses $this->get_pagenum()
 	 * @uses $this->set_pagination_args()
 	 **************************************************************************/
-	function prepare_items($param) {
+	function prepare_items() {
 		global $wpdb; //This is used only if making any database queries
 
 		//#TODO いまtable dataを全件取得してるから必要な分だけ取得するように変える
@@ -308,7 +339,7 @@ class SnsTrendListTable extends WP_List_Table {
 		 * use sort and pagination data to build a custom query instead, as you'll
 		 * be able to use your precisely-queried data immediately.
 		 */
-		$data = $this->model->get($param, 'ARRAY_A');
+		$data = $this->model->get($this->prepare_items_param, null, null, 'ARRAY_A');
 //		var_dump($data);
 		//$data = $this->example_data;
 
@@ -380,6 +411,23 @@ class SnsTrendListTable extends WP_List_Table {
 			'per_page'    => $per_page,                     //WE have to determine how many items to show on a page
 			'total_pages' => ceil($total_items/$per_page)   //WE have to calculate the total number of pages
 		) );
+	}
+
+
+	/**
+	 * @param array $prepare_items_param
+	 */
+	public function set_prepare_items_param($prepare_items_param)
+	{
+		$this->prepare_items_param = $prepare_items_param;
+	}
+
+	/**
+	 * @param \SnsTrend\SnsTrendTwitter $twitter
+	 */
+	public function set_twitter($twitter)
+	{
+		$this->twitter = $twitter;
 	}
 
 }

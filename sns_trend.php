@@ -50,6 +50,13 @@ class SnsTrend {
 		// 設定画面を追加
 		$trend_option = new SnsTrendOption();
 
+		if (!class_exists('SnsTrendShortCode'))
+			require_once SNS_TREND_ABSPATH . '/sns_trend_short_code.class.php';
+		// ショートコードを設定
+		$trend_short_code = new SnsTrendShortCode();
+
+
+
 		//#TODO 管理メニューに追加するフック example
 		add_action('admin_menu', array($this, 'mt_add_pages'));
 	}

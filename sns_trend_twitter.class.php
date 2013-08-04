@@ -13,6 +13,12 @@ use WP_HTTP_Proxy;
 use TwitterOAuth;
 use Twitter_Autolink;
 
+
+if (!class_exists('Twitter_Autolink'))
+	require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
+
+
+
 class SnsTrendTwitter {
 
 	/**
@@ -42,7 +48,7 @@ class SnsTrendTwitter {
 
 
 
-	public $tweets               = array();
+	public $tweets = array();
 
 	/**
 	 * @var TrendsModel
@@ -56,8 +62,6 @@ class SnsTrendTwitter {
 		if(!class_exists('TwitterOAuth'))
 			require_once( SNS_TREND_ABSPATH . '/libs/twitteroauth/twitteroauth.php' );
 
-		if (!class_exists('Twitter_Autolink'))
-			require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
 
 		if(!class_exists('TrendsModel'))
 			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
@@ -198,18 +202,21 @@ class SnsTrendTwitter {
 		}
 	}
 
-	public function render_twitter_list($tweets=null) {
-		if (!$tweets) $this->tweets;
+	/**
+	 * @param object $tweets
+	 */
+	public static function render_twitter_list($tweets) {
 		if (!$tweets) return;
 //		var_dump($tweets);
 
-		foreach($tweets->statuses as $status){
-			$text = Twitter_Autolink::create($status->text)
+		foreach($tweets as $tweet){
+//			var_dump($tweet);
+			$text = Twitter_Autolink::create($tweet->text)
 				->setNoFollow(false)
 				->addLinks();
 			echo '<li>'.PHP_EOL;
-			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$status->user->screen_name.'" target="_blank"><img src="'.$status->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>'.PHP_EOL;
-			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$status->created_at.'</span></p></div>'.PHP_EOL;
+			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$tweet->user->screen_name.'" target="_blank"><img src="'.$tweet->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>'.PHP_EOL;
+			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$tweet->created_at.'</span></p></div>'.PHP_EOL;
 			echo "</li>".PHP_EOL;
 		}
 	}
