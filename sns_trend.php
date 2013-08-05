@@ -31,10 +31,8 @@ class SnsTrend {
 		register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
 		//#TODO widgetsはここ
-		require_once SNS_TREND_ABSPATH . "/widgets/ranking_widget.php";
-//		add_action('widgets_init', create_function('', 'return register_widget("\SnsTrend\widgets\RankingWidget");'));
-//		add_action('widgets_init', create_function('', 'return register_widget("\SnsTrend\widgets\HogeWidget");'));
-		add_action('widgets_init', create_function('', 'return register_widget("HogeWidget");'));
+		require_once SNS_TREND_ABSPATH . "/widgets/sns_trend_ranking_widget.php";
+		add_action('widgets_init', create_function('', 'return register_widget("SnsTrendRankingWidget");'));
 
 		//#TODO ショートコードとかグローバル関数とか？
 		require_once SNS_TREND_ABSPATH . "/functions.php";
