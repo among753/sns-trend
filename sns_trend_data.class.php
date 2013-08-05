@@ -136,7 +136,7 @@ class SnsTrendData {
 		if ( isset($_REQUEST['post']) ) $param['post_id'] = $_REQUEST['post'];
 
 
-		$sns_trend_list_table->set_prepare_items_param($param);
+		$sns_trend_list_table->set_prepare_items_param($param);// prepare_items()が引数取れないのでここでset
 		$sns_trend_list_table->prepare_items();
 
 		global $title;
@@ -147,9 +147,17 @@ class SnsTrendData {
 				<?php esc_html_e($title); ?>
 			</h2>
 			<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-			<form id="movies-filter" method="get">
+			<form id="trends-filter" method="get">
+
+				<?php $sns_trend_list_table->search_box(__('search'), 'trend'); ?>
 				<!-- For plugins, we also need to ensure that the form posts back to our current page -->
-				<input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
+				<input type="hidden" name="page" value="<?php esc_attr_e($_REQUEST['page']); ?>" />
+				<input type="hidden" name="post_type" value="<?php esc_attr_e($_REQUEST['post_type']); ?>" />
+
+				<!-- param -->
+				<input type="hidden" name="trend_type" value="
+				<?php if (isset($_REQUEST['trend_type'])) esc_attr_e($_REQUEST['trend_type']); ?>" />
+
 				<!-- Now we can render the completed list table -->
 				<?php $sns_trend_list_table->display() ?>
 

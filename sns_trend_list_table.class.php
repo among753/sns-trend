@@ -93,13 +93,27 @@ class SnsTrendListTable extends WP_List_Table {
 			case $this->model->created:
 			case $this->model->modified:
 				return print_r($item,true);
-			case $this->model->trend_title:
-				return sprintf('%1$s <span style="color:silver">(post_id:%2$s)</span>', $item[$column_name], $item[$this->model->post_id]);
 			default:
 				return $item[$column_name]; //Show the whole array for troubleshooting purposes
 		}
 	}
 
+	function column_trend_title($item) {
+		//Build row actions
+		$actions = array(
+			'view'      => sprintf(
+				'<a href="%1$s">%2$s</a>',
+				get_permalink($item[$this->model->post_id]),
+				__('View')
+			)
+		);
+		return sprintf(
+			'%1$s <span style="color:silver">(post_id:%2$s)</span>%3$s',
+			$item[$this->model->trend_title],
+			$item[$this->model->post_id],
+			$this->row_actions($actions)
+		);
+	}
 
 	/** ************************************************************************
 	 * Recommended. This is a custom column method and is responsible for what
@@ -294,7 +308,12 @@ class SnsTrendListTable extends WP_List_Table {
 	function prepare_items() {
 		global $wpdb; //This is used only if making any database queries
 
-		//#TODO いまtable dataを全件取得してるから必要な分だけ取得するように変える
+		//TODO いまtable dataを全件取得してるから必要な分だけ取得するように変える
+		//TODO 検索に対応する
+		//TODO カラムによるプルダウン絞り込み検索実装
+
+		var_dump($_REQUEST);
+
 
 		/**
 		 * First, lets decide how many records per page to show

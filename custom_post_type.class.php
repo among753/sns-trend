@@ -23,6 +23,12 @@ class CustomPostType {
 	public $trends;
 
 	public function __construct() {
+
+		if(!class_exists('TrendsModel'))
+			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
+		$this->trends = new TrendsModel();
+
+
 		$this->add_actions();
 
 		if(!class_exists('MetaBox'))
@@ -192,12 +198,12 @@ class CustomPostType {
 	 */
 	function add_columns($column_name, $post_id) {
 		if( $column_name == 'trend_data' ) {
-			$page = "sns_trend_data";//#TODO
+			$page = "sns_trend_data";//#TODO sns_trend_data.class.phpのpropertyを使いたい
 			//$hogehoge = get_post_meta( $post_id, '_hogehoge', true );
-			$page_path = "edit.php?post_type={$this->post_type}&page={$page}&action=save&post={$post_id}&wp_nonce=xxxxxxxxx";//#TODO
+			$page_path = "edit.php?post_type={$this->post_type}&page={$page}&action=save&post={$post_id}&trend_type=twitter&wp_nonce=xxxxxxxxx";//#TODO
 
 			$admin_url = admin_url( $page_path );
-			printf('<a href="%s">データ取得</a>', $admin_url);
+			printf('<a href="%s">twitterデータ取得</a>', $admin_url);
 		}
 	}
 

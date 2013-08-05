@@ -246,12 +246,7 @@ CREATE TABLE ".$this->table_name." (
 		$row = array_merge($default, $row);
 //		var_dump($row,$format);
 
-		$table_exist = $this->wpdb->get_var($this->wpdb->prepare(
-			"SELECT count($this->id) FROM $this->table_name WHERE $this->trend_type = %s AND $this->trend_id = %d",
-			$row[$this->trend_type],
-			$row[$this->trend_id]
-		));
-		if ($table_exist == 1) {
+		if ($this->data_exist($row[$this->trend_type], $row[$this->trend_id]) == 1) {
 			$this->wpdb->update(
 				$this->table_name,
 				$row,
@@ -263,11 +258,27 @@ CREATE TABLE ".$this->table_name." (
 			$this->wpdb->insert( $this->table_name, $row, $format );
 		}
 
-
-		//$this->wpdb->update( $this->table_name, array( 'column1' => 'value1', 'column2' => 'value2' ), array( 'ID' => 1 ), array( '%s', '%d' ), array( '%d' ) );
 		//#TODO エラー処理 エラー返す
 		return $result = true;
 	}
+
+	/**
+	 * データが存在するか
+	 *
+	 * @param $trend_type
+	 * @param $trend_id
+	 * @return null|string
+	 */
+	protected function data_exist($trend_type, $trend_id) {
+		$data_exist = $this->wpdb->get_var($this->wpdb->prepare(
+			"SELECT count($this->id) FROM $this->table_name WHERE $this->trend_type = %s AND $this->trend_id = %s",
+			$trend_type,
+			$trend_id
+		));
+//		var_dump($data_exist);
+		return $data_exist;
+	}
+
 
 	/**
 	 * $wpdb->prepare()用のplaceholderを返す。
