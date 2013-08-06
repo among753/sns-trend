@@ -9,23 +9,27 @@
 
 namespace SnsTrend;
 
+use SnsTrend\Model\Trends;
 use WP_List_Table;
 use wpdb;
-use stdClass;
 
 if(!class_exists('WP_List_Table'))
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 
 
-class SnsTrendListTable extends WP_List_Table {
+/**
+ * Class ListTable
+ * @package SnsTrend
+ */
+class ListTable extends WP_List_Table {
 
 	/**
-	 * @var TrendsModel $model model class
+	 * @var Trends
 	 */
 	public $model;
 
 	/**
-	 * @var SnsTrendTwitter
+	 * @var Twitter
 	 */
 	protected $twitter;
 
@@ -39,18 +43,13 @@ class SnsTrendListTable extends WP_List_Table {
 	 * use the parent reference to set some default configs.
 	 *
 	 * @param string $post_type
-	 * @param TrendsModel $model model class
+	 * @param Trends $model model class
 	 */
 	function __construct(){
 		global $status, $page;
 
-		if(!class_exists('TrendsModel'))
-			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
-		$this->model = new TrendsModel();
+		$this->model = new Trends();
 
-
-		if(!class_exists('SnsTrendTwitter'))
-			require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
 //		$this->twitter = new SnsTrendTwitter();
 
 
@@ -442,7 +441,7 @@ class SnsTrendListTable extends WP_List_Table {
 	}
 
 	/**
-	 * @param \SnsTrend\SnsTrendTwitter $twitter
+	 * @param Twitter $twitter
 	 */
 	public function set_twitter($twitter)
 	{

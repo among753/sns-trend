@@ -10,24 +10,20 @@
 namespace SnsTrend;
 
 
-class SnsTrendOption {
+/**
+ * Class SnsTrendOption
+ * @package SnsTrend
+ */
+class Option {
 
 	public $option_group = 'sns_trend_options_group';
 
 
 	public function __construct() {
-
-
-		$this->init();
-
-	}
-
-	public function init() {
 		add_action('admin_init', array($this, 'setting_options_page'));
 		add_action('admin_menu', array($this, 'add_options_page'));
-
-
 	}
+
 
 	/**
 	 * 設定ページのセッティング
@@ -160,8 +156,8 @@ class SnsTrendOption {
 				$input = sprintf('<input type="%s" id="%s" name="%s" size="60" value="%s">', $type, $id, $name, esc_attr($value));
 				break;
 			case 'hidden' :
-				$input = sprintf('<input type="%s" id="%s" name="%s" value="%s">', $type, $id, $name, esc_attr($value));
 			default :
+				$input = sprintf('<input type="%s" id="%s" name="%s" value="%s">', $type, $id, $name, esc_attr($value));
 				break;
 		}
 		echo $input;
@@ -196,10 +192,6 @@ class SnsTrendOption {
 	}
 
 }
-
-
-
-
 
 
 

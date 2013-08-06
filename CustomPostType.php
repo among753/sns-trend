@@ -8,31 +8,30 @@
  */
 
 namespace SnsTrend;
+use SnsTrend\Model\Trends;
 
+/**
+ * Class CustomPostType
+ * @package SnsTrend
+ */
 class CustomPostType {
 
 	public $post_type = 'trend';
 
 	public $meta_box;
 
-	//#TODO ページ構造的にsns_trend_dataを持ったほうがいいかも
-
 	/**
-	 * @var TrendsModel
+	 * @var Trends
 	 */
-	public $trends;
+	protected $trends;
 
 	public function __construct() {
 
-		if(!class_exists('TrendsModel'))
-			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
-		$this->trends = new TrendsModel();
+		$this->trends = new Trends();
 
 
 		$this->add_actions();
 
-		if(!class_exists('MetaBox'))
-			require_once SNS_TREND_ABSPATH . "/meta_box.class.php";
 
 		// カスタムポストタイプにメタボックス追加
 		$params = array(
@@ -268,7 +267,5 @@ class CustomPostType {
 		}
 		return $contextual_help;
 	}
-
-
 
 }

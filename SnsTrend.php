@@ -9,14 +9,25 @@ Author URI: https://github.com/among753
 */
 
 namespace SnsTrend;
+use SplClassLoader;
+use SnsTrend\Model\Trends;
+
 
 define( 'SNS_TREND_ABSPATH', dirname( __FILE__ ) );
+
+
+require SNS_TREND_ABSPATH . '/libs/SplClassLoader.php';
+$class_loader_sns_trend = new SplClassLoader('SnsTrend', dirname(__DIR__));
+$class_loader_sns_trend->register();
+
 
 $sns_trend = new SnsTrend();
 
 
+
 /**
  * Class SnsTrend
+ * @package SnsTrend
  */
 class SnsTrend {
 	/**
@@ -30,33 +41,25 @@ class SnsTrend {
 		register_activation_hook(__FILE__, array($this, 'activate'));
 		register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
-		//#TODO widgetsはここ
-		require_once SNS_TREND_ABSPATH . "/widgets/sns_trend_ranking_widget.php";
-		add_action('widgets_init', create_function('', 'return register_widget("SnsTrendRankingWidget");'));
 
-		//#TODO ショートコードとかグローバル関数とか？
-		require_once SNS_TREND_ABSPATH . "/functions.php";
-
-		if(!class_exists('CustomPostType'))
-			require_once SNS_TREND_ABSPATH . "/custom_post_type.class.php";
 		// カスタムポストタイプ登録
 		$trend = new CustomPostType();
 
-		if(!class_exists('SnsTrendData'))
-			require_once SNS_TREND_ABSPATH . "/sns_trend_data.class.php";
 		// trendsテーブルの一覧ページ
-		$trend_data = new SnsTrendData();
+		$trend_data = new Data();
 
-		if (!class_exists('SnsTrendOption'))
-			require_once SNS_TREND_ABSPATH . '/sns_trend_option.class.php';
 		// 設定画面を追加
-		$trend_option = new SnsTrendOption();
+		$trend_option = new Option();
 
-		if (!class_exists('SnsTrendShortCode'))
-			require_once SNS_TREND_ABSPATH . '/sns_trend_short_code.class.php';
 		// ショートコードを設定
-		$trend_short_code = new SnsTrendShortCode();
+		$trend_short_code = new ShortCode();
 
+		//#TODO widgets namespaceが使えない
+		require_once SNS_TREND_ABSPATH . "/widgets/sns_trend_ranking_widget.php";
+		add_action('widgets_init', function(){register_widget("SnsTrendRankingWidget");});
+
+		//TODO ショートコードとかグローバル関数とか？
+		require_once SNS_TREND_ABSPATH . "/functions.php";
 
 
 		//#TODO 管理メニューに追加するフック example
@@ -65,9 +68,7 @@ class SnsTrend {
 
 	public function activate() {
 		// 複数テーブルのアクティベート化 tableをmodel化してmodel単位で扱う
-		if(!class_exists('TrendsModel'))
-			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
-		$trends = new TrendsModel();
+		$trends = new Trends();
 
 		if($trends->table_exists()) {
 			//データベースが最新かどうか確認
@@ -132,4 +133,5 @@ class SnsTrend {
 	}
 
 }
-?>
+
+

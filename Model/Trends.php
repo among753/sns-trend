@@ -7,27 +7,14 @@
  * To change this template use File | Settings | File Templates.
  */
 
-namespace SnsTrend;
-
-/*
-	This SQL query will create the table to store your object.
-
-	CREATE TABLE `trends` (
-	`trend_id` BIGINT NOT NULL auto_increment,
-	`post_id` BIGINT NOT NULL,
-	`trend_data` TEXT NOT NULL,
-	`trend_created` DATETIME NOT NULL,
-	`trend_modified` DATETIME NOT NULL,
-	PRIMARY KEY  (`id`)) ENGINE=MyISAM;
-*/
-
+namespace SnsTrend\Model;
 use wpdb;
 
 /**
  * Class TrendsModel
- * @package SnsTrend
+ * @package SnsTrend\Model
  */
-class TrendsModel {
+class Trends {
 	/**
 	 * @var string CREATE TABLE
 	 */
@@ -186,7 +173,7 @@ CREATE TABLE ".$this->table_name." (
   UNIQUE KEY type_id (trend_type, trend_id)
 )
         ";
-		require_once ABSPATH."wp-admin/includes/upgrade.php";
+		require_once ABSPATH . "wp-admin/includes/upgrade.php";
 		return $result = dbDelta($sql);
 	}
 	public function insert_example_data() {
@@ -218,7 +205,7 @@ CREATE TABLE ".$this->table_name." (
 	 * @param string $output_type
 	 * @return mixed
 	 */
-	public function get( $wheres = null, $orderby=null, $limit=null, $output = OBJECT ) {
+	public function get( $wheres=null, $orderby=null, $limit=null, $output = OBJECT ) {
 
 		//#TODO orderby limit を追加する
 		$query = $this->wpdb->prepare(
@@ -311,4 +298,3 @@ CREATE TABLE ".$this->table_name." (
 	}
 
 }
-?>

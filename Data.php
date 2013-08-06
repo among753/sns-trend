@@ -9,10 +9,14 @@
 
 namespace SnsTrend;
 
-
+use SnsTrend\Model\Trends;
 use wpdb;
 
-class SnsTrendData {
+/**
+ * Class SnsTrendData
+ * @package SnsTrend
+ */
+class Data {
 
 	/**
 	 * @var
@@ -23,24 +27,16 @@ class SnsTrendData {
 	public $page = 'sns_trend_data';
 
 	/**
-	 * @var TrendsModel
+	 * @var Trends
 	 */
 	public $trends;
 
-	/* @var SnsTrendTwitter */
+	/* @var Twitter */
 	public $twitter;
 
 	public function __construct() {
 
-		if (!class_exists('SnsTrendListTable'))
-			require_once( SNS_TREND_ABSPATH . '/sns_trend_list_table.class.php' );
-
-		if(!class_exists('TrendsModel'))
-			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
-		$this->trends = new TrendsModel();
-
-		if(!class_exists('SnsTrendTwitter'))
-			require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
+		$this->trends = new Trends();
 
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array($this, 'add_pages'));
@@ -66,7 +62,7 @@ class SnsTrendData {
 		/** @var $wpdb wpdb */
 		global $wpdb;
 
-		$this->twitter = new SnsTrendTwitter();
+		$this->twitter = new Twitter();
 
 
 		//#TODO $_GETの処理
@@ -75,7 +71,7 @@ class SnsTrendData {
 
 		switch ($action) {
 			case 'save':
-				if (!$post_id) return;
+				if (!$post_id) return false;
 				//#TODO twitter class ajaxでの呼び出しを考慮して作る
 
 				//#TODO nonce check
@@ -102,7 +98,7 @@ class SnsTrendData {
 				//echo "row:";var_dump($row);
 
 				$param = array(
-					'q' => SnsTrendTwitter::consolidatedQuery($row->post_title, $row->meta_value),
+					'q' => Twitter::consolidatedQuery($row->post_title, $row->meta_value),
 					'count' => '3', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
 				$result = $this->twitter->search($param);
@@ -123,12 +119,12 @@ class SnsTrendData {
 //		var_dump($this->data);
 		//#TODO DEBUG twitterからデータを取得した時はDEBUG表示
 		if ($this->data)
-			SnsTrendTwitter::render_twitter_list($this->data->statuses);
+			Twitter::render_twitter_list($this->data->statuses);
 
 		//#TODO データの一覧を出力
 		echo "<strong>#TODO pagenationのパラメーターにsaveがついて毎回保存しちゃう。</strong>";//#TODO
 
-		$sns_trend_list_table = new SnsTrendListTable();
+		$sns_trend_list_table = new ListTable();
 		$param = array(
 			'trend_type' => 'twitter'
 		);

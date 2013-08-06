@@ -9,6 +9,7 @@
 
 namespace SnsTrend;
 
+use SnsTrend\Model\Trends;
 use WP_HTTP_Proxy;
 use TwitterOAuth;
 use Twitter_Autolink;
@@ -17,9 +18,15 @@ use Twitter_Autolink;
 if (!class_exists('Twitter_Autolink'))
 	require_once( SNS_TREND_ABSPATH . '/libs/Twitter/Autolink.php');
 
+if(!class_exists('TwitterOAuth'))
+	require_once( SNS_TREND_ABSPATH . '/libs/twitteroauth/twitteroauth.php' );
 
 
-class SnsTrendTwitter {
+/**
+ * Class Twitter
+ * @package SnsTrend
+ */
+class Twitter {
 
 	/**
 	 * @var TwitterOAuth
@@ -51,7 +58,7 @@ class SnsTrendTwitter {
 	public $tweets = array();
 
 	/**
-	 * @var TrendsModel
+	 * @var Trends
 	 */
 	public $trends;
 
@@ -59,13 +66,7 @@ class SnsTrendTwitter {
 
 	public function __construct() {
 
-		if(!class_exists('TwitterOAuth'))
-			require_once( SNS_TREND_ABSPATH . '/libs/twitteroauth/twitteroauth.php' );
-
-
-		if(!class_exists('TrendsModel'))
-			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
-		$this->trends = new TrendsModel();
+		$this->trends = new Trends();
 
 		// optionから取得しセット
 		$this->setProperty();

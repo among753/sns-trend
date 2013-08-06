@@ -11,8 +11,8 @@ namespace SnsTrend;
 
 
 /**
- * Class SnsTrendMetaBox
- *
+ * Class MetaBox
+ * @package SnsTrend
  */
 class MetaBox {
 	public $id            = '';// HTML 'id' attribute of the edit screen section
@@ -37,7 +37,7 @@ class MetaBox {
 							);
 
 	public function __construct( $args ) {
-		// to propaty
+		// to property
 		foreach ($args as $key => $value) {
 			if (isset($this->{$key}) || $key === 'screen' || $key === 'callback_args') {
 				$this->{$key} = $value;
@@ -472,7 +472,5 @@ class MetaBox {
 		// 戻り値としてJavascriptを生成
 		die( "document.getElementById('$field_id').value = '$lat$long'" );
 	}
-
-
 
 }

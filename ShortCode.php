@@ -7,23 +7,22 @@
  */
 
 namespace SnsTrend;
+use SnsTrend\Model\Trends;
 
-
-class SnsTrendShortCode {
+/**
+ * Class ShortCode
+ * @package SnsTrend
+ */
+class ShortCode {
 
 	/**
-	 * @var TrendsModel
+	 * @var Trends
 	 */
 	protected $trends;
 
 	public function __construct() {
 
-		if(!class_exists('SnsTrendTwitter'))
-			require_once SNS_TREND_ABSPATH . "/sns_trend_twitter.class.php";
-
-		if(!class_exists('TrendsModel'))
-			require_once SNS_TREND_ABSPATH . "/trends_model.class.php";
-		$this->trends = new TrendsModel();
+		$this->trends = new Trends();
 
 
 		add_shortcode('sns-trend-list', array($this, 'snsTrendList'));
@@ -53,11 +52,10 @@ class SnsTrendShortCode {
 		foreach ($result as $tweet) {
 			$trend_data = unserialize($tweet->trend_data);
 //			var_dump($trend_data);
-			SnsTrendTwitter::render_twitter_list(array($trend_data));
+			Twitter::render_twitter_list(array($trend_data));
 		}
 
 		return $post_id;
 	}
 
 }
-
