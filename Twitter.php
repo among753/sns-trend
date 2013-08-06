@@ -189,15 +189,15 @@ class Twitter {
 				$this->trends->post_id => $post->ID,
 				$this->trends->trend_type => $this->type,
 				$this->trends->trend_id => $tweet->id_str,//32bitOSではint型でbigintがオーバーフローする・・
-				$this->trends->trend_created_at => $tweet->created_at,
+				$this->trends->trend_created_at => gmdate("Y-m-d H:i:s", (int)strtotime($tweet->created_at) + (int)date_i18n('Z')),//TODO ローカルタイム GMTも扱う？
 				$this->trends->trend_title => $post->post_title,
 				$this->trends->trend_text => $tweet->text,
 				$this->trends->trend_user_id => $tweet->user->id,
 				$this->trends->trend_data => serialize($tweet),
-//				$this->trends->created => current_time('mysql'),
-//				$this->trends->modified => current_time('mysql'),
+				$this->trends->created => current_time('mysql'),
+				$this->trends->modified => current_time('mysql'),
 			);
-//			var_dump($row);
+//			var_dump(date_i18n('Z'),$row);
 
 			$this->trends->save($row);
 		}

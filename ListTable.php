@@ -369,13 +369,13 @@ class ListTable extends WP_List_Table {
 		 * to a custom query. The returned data will be pre-sorted, and this array
 		 * sorting technique would be unnecessary.
 		 */
-		function usort_reorder($a,$b){
+
+		usort($data, function ($a,$b) {
 			$orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'id'; //If no sort, default to title
 			$order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'desc'; //If no order, default to asc
 			$result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
 			return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
-		}
-		usort($data, '\SnsTrend\usort_reorder');
+		});
 
 
 		/***********************************************************************

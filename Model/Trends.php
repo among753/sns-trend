@@ -159,14 +159,14 @@ CREATE TABLE ".$this->table_name." (
   post_id bigint(20) NOT NULL,
   trend_type VARCHAR(100) NOT NULL,
   trend_id BIGINT NOT NULL,
-  trend_created_at VARCHAR(64) NOT NULL,
+  trend_created_at DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
   trend_title TEXT NOT NULL,
   trend_text TEXT NOT NULL,
   trend_url VARCHAR(255) NOT NULL,
   trend_user_id BIGINT NOT NULL,
   trend_data TEXT NOT NULL,
-  created  DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  modified DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  created  DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
+  modified DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
   PRIMARY KEY  (id),
   KEY (post_id),
   KEY (trend_user_id),
@@ -185,7 +185,7 @@ CREATE TABLE ".$this->table_name." (
 		// Insert example data
 		$rows = array(
 			array(
-				$this->id => 3,
+//				$this->id => 3,
 				$this->trend_type => 'twitter',
 				$this->trend_id => 1,
 				$this->trend_data => "serialize data",
@@ -215,6 +215,21 @@ CREATE TABLE ".$this->table_name." (
 //		var_dump($query);
 		return $this->wpdb->get_results($query, $output);
 	}
+
+
+	public function get_col($col, $wheres=null, $orderby=null, $limit=null, $x = 0 ) {
+		//#TODO orderby limit を追加する
+		$query = $this->wpdb->prepare(
+			"SELECT $col FROM {$this->table_name}" . $this->get_where($wheres),
+			$wheres
+		);
+		var_dump($query);
+		if ( $orderby )
+			$query .= " ORDER BY $col " . $orderby;
+		var_dump($query);
+		return $this->wpdb->get_col($query, $x);
+	}
+
 
 	/**
 	 * @param $row
@@ -296,5 +311,6 @@ CREATE TABLE ".$this->table_name." (
 //		var_dump($params, $where);
 		return $where;
 	}
+
 
 }

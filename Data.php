@@ -99,11 +99,38 @@ class Data {
 
 				$param = array(
 					'q' => Twitter::consolidatedQuery($row->post_title, $row->meta_value),
-					'count' => '3', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
+					'count' => '5', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
 				$result = $this->twitter->search($param);
 
 				$this->twitter->save($row);
+
+
+
+				//TODO postmetaにsns_trend_countを保存
+//				$trend_count['day'];
+//				$trend_count['week'];
+//				$trend_count['month'];
+//				$trend_count['year'];
+//				$trend_count['all'];
+
+				// 全時間取得
+				$query = $wpdb->prepare(
+					"
+					SELECT count({$this->trends->trend_created_at})
+					FROM {$this->trends->table_name}
+					WHERE {$this->trends->post_id}=%s AND
+					{$this->trends->trend_created_at} BETWEEN %s AND %s
+					ORDER BY {$this->trends->trend_created_at} DESC
+					",
+					$post_id,
+					"2000-01-01 10:10:12","2013-08-06 18:50:11"
+				);
+				$trend_created_at = $wpdb->get_var($query);
+
+				var_dump($trend_created_at);
+
+
 
 				return $this->data = $result;
 			case 'invalidate':
