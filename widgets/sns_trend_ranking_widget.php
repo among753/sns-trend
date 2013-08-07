@@ -9,6 +9,7 @@
 //namespace SnsTrend\widgets;
 //use WP_Widget;
 
+use SnsTrend\Model\Posts;
 use SnsTrend\Model\Trends;
 
 
@@ -16,8 +17,24 @@ use SnsTrend\Model\Trends;
  * Class SnsTrendRankingWidget
  */
 class SnsTrendRankingWidget extends WP_Widget {
+
+	/**
+	 * @var Trends
+	 */
+	protected $trends;
+
+	/**
+	 * @var Posts
+	 */
+	protected $posts;
+
+	protected $post_type = 'trend';//TODO
+
 	/** constructor */
 	function __construct() {
+		$this->trends = new Trends();
+		$this->posts  = new Posts();
+
 		parent::__construct(false, $name = 'RankingWidget');
 	}
 
@@ -30,12 +47,18 @@ class SnsTrendRankingWidget extends WP_Widget {
 
 		$before_widget='';$before_title='';$after_title='';$after_widget='';
 		extract( $args );
-		var_dump($instance);
+//		var_dump($instance);
 
 		//TODO post_idごとの数を並べる
-		$trends = new Trends();
-		$result = $trends->get();
-		var_dump($result);
+		$posts = get_posts(array(
+			'post_type'       => $this->post_type,
+			'order' => 'DESC',
+			'orderby' => 'meta_value_num',// string:meta_value number:meta_value_num
+			'meta_key' => $this->posts->meta['trend_count_all']
+		));
+		//var_dump($posts);
+
+
 
 		$title = apply_filters('widget_title', empty($instance['title']) ? '' : $instance['title'], $instance, $this->id_base);
 		$team = empty($instance['team']) ? '' : $instance['team'] ;
@@ -45,7 +68,18 @@ class SnsTrendRankingWidget extends WP_Widget {
 		<?php if ( $title )
 			echo $before_title . $title . $after_title; ?>
 
-		<strong>Hello, World!</strong>
+		<?php
+		foreach ($posts as $post) {
+//			var_dump($post);
+			$trend_count_all = get_post_meta( $post->ID , $this->posts->meta["trend_count_all"] , true );
+			printf(
+				'<a href="%1$s">%2$s : (%3$s)</a><br>',
+				get_permalink($post->ID),
+				esc_html($post->post_title),
+				esc_html($trend_count_all)
+			);
+		}
+		?>
 
 		<?php echo $after_widget; ?>
 	<?php

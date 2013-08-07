@@ -168,7 +168,7 @@ class Option {
 	 */
 	public function add_options_page() {
 		//#TODO 設定用ページ
-		add_options_page(__('SNS Trend'), __('SNS Trend'), 'administrator', 'options', array($this, 'render_options_page'));
+		add_options_page(__('SNS Trend'), __('SNS Trend'), 'administrator', 'sns-trend-options', array($this, 'render_options_page'));
 	}
 	/**
 	 * Render options page.

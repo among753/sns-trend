@@ -121,15 +121,15 @@ class SnsTrend {
 			echo "<h2>Test Sublevel 2</h2>";
 		}
 		// 設定メニュー下にサブメニューを追加:
-		add_options_page('Test Options', 'Test Options', 'administrator', 'testoptions', '\SnsTrend\mt_options_page');
+		add_options_page('Test Options', 'Test Options', 'administrator', 'test-options', '\SnsTrend\mt_options_page');
 		// 管理メニューにサブメニューを追加
-		add_management_page('Test Manage', 'Test Manage', 'administrator', 'testmanage', '\SnsTrend\mt_manage_page');
+		add_management_page('Test Manage', 'Test Manage', 'administrator', 'test-manage', '\SnsTrend\mt_manage_page');
 		// 新しいトップレベルメニューを追加(分からず屋):
-		add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', __FILE__, '\SnsTrend\mt_toplevel_page');
+		add_menu_page('Test Toplevel', 'Test Toplevel', 'administrator', 'test-toplevel-page', '\SnsTrend\mt_toplevel_page');
 		// カスタムのトップレベルメニューにサブメニューを追加:
-		add_submenu_page(__FILE__, 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', '\SnsTrend\mt_sublevel_page');
+		add_submenu_page('test-toplevel-page', 'Test Sublevel', 'Test Sublevel', 'administrator', 'sub-page', '\SnsTrend\mt_sublevel_page');
 		// カスタムのトップレベルメニューに二つ目のサブメニューを追加:
-		add_submenu_page(__FILE__, 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', '\SnsTrend\mt_sublevel_page2');
+		add_submenu_page('test-toplevel-page', 'Test Sublevel 2', 'Test Sublevel 2', 'administrator', 'sub-page2', '\SnsTrend\mt_sublevel_page2');
 	}
 
 }

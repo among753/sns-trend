@@ -100,16 +100,22 @@ class ListTable extends WP_List_Table {
 	function column_trend_title($item) {
 		//Build row actions
 		$actions = array(
+			'edit'      => sprintf(
+				'<a href="%1$s">%2$s</a>',
+				admin_url("post.php?post={$item[$this->model->post_id]}&action=edit"),
+				__('Edit')
+			),
 			'view'      => sprintf(
 				'<a href="%1$s">%2$s</a>',
 				get_permalink($item[$this->model->post_id]),
 				__('View')
-			)
+			),
 		);
 		return sprintf(
-			'%1$s <span style="color:silver">(post_id:%2$s)</span>%3$s',
+			'%1$s <span style="color:silver">(post_id:%2$s id:%3$s)</span>%4$s',
 			$item[$this->model->trend_title],
 			$item[$this->model->post_id],
+			$item[$this->model->id],
 			$this->row_actions($actions)
 		);
 	}
@@ -134,26 +140,20 @@ class ListTable extends WP_List_Table {
 
 		//Build row actions
 		$actions = array(
-			'edit'      => sprintf(
-				'<a href="?post_type=%1$s&page=%2$s&action=%3$s&id=%4$s">Edit</a>', $_REQUEST['post_type'],
-				$_REQUEST['page'],
-				'edit',
-				$item[$this->model->id]
-			),
 			'delete'    => sprintf(
-				'<a href="?post_type=%1$s&page=%2$s&action=%3$s&id=%4$s">Delete</a>',
+				'<a href="?post_type=%1$s&page=%2$s&action=%3$s&id=%4$s">%5$s</a>',
 				$_REQUEST['post_type'],
 				$_REQUEST['page'],
 				'delete',
-				$item[$this->model->id]
+				$item[$this->model->id],
+				__('Delete')
 			),
 		);
 
 		//Return the title contents
-		return sprintf('%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
+		return sprintf('%1$s <span style="color:silver">(id:%1$s)</span>%2$s',
 			/*$1%s*/ $item[$this->model->id],
-			/*$2%s*/ $item[$this->model->id],
-			/*$3%s*/ $this->row_actions($actions)
+			/*$2%s*/ $this->row_actions($actions)
 		);
 	}
 
@@ -208,7 +208,7 @@ class ListTable extends WP_List_Table {
 			$this->model->trend_created_at => 'TREND_CREATED_AT',
 			$this->model->trend_title      => 'TREND_TITLE',
 			$this->model->trend_text       => 'TREND_TEXT',
-			$this->model->trend_url        => 'TREND_URL',
+//			$this->model->trend_url        => 'TREND_URL',
 			$this->model->trend_user_id    => 'TREND_USER_ID',
 //			$this->model->trend_data       => 'TREND_DATA',
 //			$this->model->created          => 'CREATED',
@@ -234,7 +234,7 @@ class ListTable extends WP_List_Table {
 	function get_sortable_columns() {
 		$sortable_columns = array(
 			$this->model->id               => array($this->model->id,true), //true means it's already sorted
-//			$this->model->post_id          => array($this->model->post_id,false),
+			$this->model->post_id          => array($this->model->post_id,false),
 			$this->model->trend_type       => array($this->model->trend_type,false),
 			$this->model->trend_id         => array($this->model->trend_id,false),
 			$this->model->trend_created_at => array($this->model->trend_created_at,false),
@@ -242,9 +242,9 @@ class ListTable extends WP_List_Table {
 			$this->model->trend_text       => array($this->model->trend_text,false),
 			$this->model->trend_url        => array($this->model->trend_url,false),
 			$this->model->trend_user_id    => array($this->model->trend_user_id,false),
-//			$this->model->trend_data       => array($this->model->trend_data,false),
-//			$this->model->created          => array($this->model->created,false),
-//			$this->model->modified         => array($this->model->modified,false),
+			$this->model->trend_data       => array($this->model->trend_data,false),
+			$this->model->created          => array($this->model->created,false),
+			$this->model->modified         => array($this->model->modified,false),
 		);
 		return $sortable_columns;
 	}
@@ -317,7 +317,7 @@ class ListTable extends WP_List_Table {
 		/**
 		 * First, lets decide how many records per page to show
 		 */
-		$per_page = 5;
+		$per_page = 10;
 
 
 		/**

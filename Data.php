@@ -9,6 +9,7 @@
 
 namespace SnsTrend;
 
+use SnsTrend\Model\Posts;
 use SnsTrend\Model\Trends;
 use wpdb;
 
@@ -18,25 +19,31 @@ use wpdb;
  */
 class Data {
 
+	const PAGE = 'sns_trend_data';
+
 	/**
 	 * @var
 	 */
 	public $data;
 
-	public $post_type = 'trend';
-	public $page = 'sns_trend_data';
-
 	/**
-	 * @var Trends
+	 * @var Trends Model
 	 */
 	public $trends;
+
+	/**
+	 * @var Posts TODO Posts Modelを作る
+	 */
+	public $posts;
 
 	/* @var Twitter */
 	public $twitter;
 
 	public function __construct() {
 
+		// Model
 		$this->trends = new Trends();
+		$this->posts  = new Posts();
 
 		// 管理メニューに追加するフック
 		add_action('admin_menu', array($this, 'add_pages'));
@@ -45,7 +52,7 @@ class Data {
 
 	public function add_pages() {
 		// カスタムのトップレベルメニューにサブメニューを追加:
-		$hook_suffix = add_submenu_page("edit.php?post_type={$this->post_type}", __('Trend Data'), __('Trend Data'), 'administrator', $this->page, array($this, 'render_trend_data_list'));
+		$hook_suffix = add_submenu_page("edit.php?post_type=" . CustomPostType::POST_TYPE, __('Trend Data'), __('Trend Data'), 'administrator', self::PAGE, array($this, 'render_trend_data_list'));
 
 		// edit.php?post_type=trend&page=sns_trend_data
 		add_action("admin_head-{$hook_suffix}", array($this, 'admin_head_action'));
@@ -76,34 +83,24 @@ class Data {
 
 				//#TODO nonce check
 
+
+				// postデータとpostmetaデータを取得
+				$post = get_post( $post_id );
+				$trend_keywords = get_post_meta( $post_id , $this->posts->meta["trend_keywords"] , true );
+//				var_dump($post, $trend_keywords);
+
+
+				// TODO Twitter 後で他SNSのデータ検索保存を実装
+				// post_titleとtrend_keywordsからTwitterを検索
 				$this->twitter->getAccessToken();
-
-				$query = $wpdb->prepare(
-					"
-					SELECT
-					  *
-					FROM
-					  $wpdb->posts AS P
-					  LEFT JOIN
-					  $wpdb->postmeta AS PM
-					   ON P.ID = PM.post_id
-					  WHERE  P.ID = %d
-					  AND PM.meta_key = %s
-  					",
-					$post_id,
-					$option_name="trend_keywords"
-				);
-
-				$row = $wpdb->get_row($query);
-				//echo "row:";var_dump($row);
-
 				$param = array(
-					'q' => Twitter::consolidatedQuery($row->post_title, $row->meta_value),
+					'q' => Twitter::consolidatedQuery($post->post_title, $trend_keywords),
 					'count' => '5', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
 				$result = $this->twitter->search($param);
 
-				$this->twitter->save($row);
+				// 取得データを保存
+				$this->twitter->save($post);
 
 
 
@@ -115,26 +112,15 @@ class Data {
 //				$trend_count['all'];
 
 				// 全時間取得
-				$query = $wpdb->prepare(
-					"
-					SELECT count({$this->trends->trend_created_at})
-					FROM {$this->trends->table_name}
-					WHERE {$this->trends->post_id}=%s AND
-					{$this->trends->trend_created_at} BETWEEN %s AND %s
-					ORDER BY {$this->trends->trend_created_at} DESC
-					",
-					$post_id,
-					"2000-01-01 10:10:12","2013-08-06 18:50:11"
-				);
-				$trend_created_at = $wpdb->get_var($query);
+				$trend_count_all = $this->trends->get_count($post_id, $term='all');
+//				var_dump($trend_count_all);
 
-				var_dump($trend_created_at);
-
-
+				// postmetaに保存
+				update_post_meta($post_id, $this->posts->meta["trend_count_all"], $trend_count_all);
 
 				return $this->data = $result;
 			case 'invalidate':
-				return $this->data = $this->twitter->invalidate();
+				return $this->data = $this->twitter->invalidate();// TODO 設定画面に移動
 			default:
 				return $this->data = "";
 		}

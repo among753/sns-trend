@@ -33,6 +33,8 @@ class Twitter {
 	 */
 	public $connection;
 
+	public $type = 'twitter';
+
 	public $option_name         = 'sns_trend_twitter';
 	public $options = array(
 		'consumer_key'                => '',
@@ -62,7 +64,7 @@ class Twitter {
 	 */
 	public $trends;
 
-	public $type = 'twitter';
+
 
 	public function __construct() {
 
@@ -106,8 +108,8 @@ class Twitter {
 		if ((int)strtotime($this->bearer_access_token_expired) + $this->expired < date_i18n('U')) {
 
 			$inv = $this->connection->invalidateBearerToken($this->connection->getBearerToken());
-			echo "invalidateBearerToken():"; var_dump($inv);//#TODO DEBUG
-			//var_dump($this->connection);
+//			echo "invalidateBearerToken():"; var_dump($inv);//#TODO DEBUG
+//			var_dump($this->connection);
 
 			// 再発行
 			$this->bearer_access_token = $this->connection->getBearerToken();
@@ -117,11 +119,11 @@ class Twitter {
 				$this->options['bearer_access_token_expired'] = current_time('mysql');
 				update_option($this->option_name, $this->options);
 			}
-			echo "再発行："; var_dump($this->bearer_access_token);//#TODO DEBUG
+//			echo "再発行："; var_dump($this->bearer_access_token);//#TODO DEBUG
 
 		} else {
 			$this->connection->setBearerToken($this->bearer_access_token);
-			echo "optionsからセット："; var_dump($this->bearer_access_token);//#TODO DEBUG
+//			echo "optionsからセット："; var_dump($this->bearer_access_token);//#TODO DEBUG
 		}
 
 	}

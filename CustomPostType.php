@@ -8,7 +8,9 @@
  */
 
 namespace SnsTrend;
+
 use SnsTrend\Model\Trends;
+
 
 /**
  * Class CustomPostType
@@ -17,6 +19,7 @@ use SnsTrend\Model\Trends;
 class CustomPostType {
 
 	public $post_type = 'trend';
+	const POST_TYPE = 'trend';
 
 	public $meta_box;
 
@@ -29,17 +32,16 @@ class CustomPostType {
 
 		$this->trends = new Trends();
 
-
 		$this->add_actions();
 
 
 		// カスタムポストタイプにメタボックス追加
 		$params = array(
 			array(
-				'meta_key'   => 'trend_keywords',
+				'meta_key'   => '_trend_keywords',
 				'input_type' => 'text',
-				'input_value' => 'らーめん',
-				'description' => __("検索ワードを入力してください。"),
+				'input_value' => '',
+				'description' => __("検索ワードをカンマで区切って入力してください。"),
 				'validate'   => array(
 					'length'  => 100,
 //					'require' => true
@@ -74,7 +76,7 @@ class CustomPostType {
 			'title'         => _x('キーワード', 'word hosoku'),
 			'params'         => $params,
 //			'callback'      => 'trends_meta_html',
-			'screen'        => $this->post_type,
+			'screen'        => self::POST_TYPE,
 			'context'       => 'advanced',
 			'priority'      => 'default',
 			'callback_args' => null
@@ -89,9 +91,9 @@ class CustomPostType {
 		add_action('init', array(&$this, 'register_taxonomy'), 0);
 
 		// 管理画面一覧のタイトルに項目追加
-		add_filter( "manage_edit-{$this->post_type}_columns", array($this, 'manage_edit_columns') );
+		add_filter( "manage_edit-". self::POST_TYPE ."_columns", array($this, 'manage_edit_columns') );
 		// trend_data の内容表示
-		add_action( 'manage_posts_custom_column', array($this, 'add_columns'),null, 2);
+		add_action( 'manage_posts_custom_column', array($this, 'manage_posts_custom_column'),null, 2);
 
 		//add filter to insure the text Trend, or trend, is displayed when user updates a trend
 		add_filter('post_updated_messages', array(&$this, 'filter_post_updated_message'));
@@ -132,7 +134,7 @@ class CustomPostType {
 			'supports' => array('title','editor','author','thumbnail','excerpt','custom-fields','comments'),
 			'register_meta_box_cb' => array(&$this, 'register_meta_box_cb')
 		);
-		register_post_type($this->post_type, $args);
+		register_post_type(self::POST_TYPE, $args);
 	}
 
 	/**
@@ -160,9 +162,9 @@ class CustomPostType {
 			'hierarchical'      => true,
 //			'update_count_callback' => '',// teamが増減した時に呼ばれる関数。post_type共通でtaxonomyを使う場合とか？
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'cate_'.$this->post_type ),
+			'rewrite'           => array( 'slug' => 'cate_'.self::POST_TYPE ),
 		);
-		register_taxonomy('cate_'.$this->post_type, $this->post_type, $args);
+		register_taxonomy('cate_'.self::POST_TYPE, self::POST_TYPE, $args);
 	}
 
 	/**
@@ -195,12 +197,16 @@ class CustomPostType {
 	 * @param string $column_name
 	 * @param int $post_id
 	 */
-	function add_columns($column_name, $post_id) {
+	function manage_posts_custom_column( $column_name, $post_id ) {
 		if( $column_name == 'trend_data' ) {
-			$page = "sns_trend_data";//#TODO sns_trend_data.class.phpのpropertyを使いたい
-			//$hogehoge = get_post_meta( $post_id, '_hogehoge', true );
-			$page_path = "edit.php?post_type={$this->post_type}&page={$page}&action=save&post={$post_id}&trend_type=twitter&wp_nonce=xxxxxxxxx";//#TODO
-
+			$page_path = sprintf(
+				'edit.php?post_type=%1$s&page=%2$s&action=save&post=%3$s&trend_type=%4$s&wp_nonce=%5$s',
+				self::POST_TYPE,
+				Data::PAGE,
+				$post_id,
+				'twitter',
+				'1374812304'//TODO wp_nonceとか使う？一回だけ保存する
+			);
 			$admin_url = admin_url( $page_path );
 			printf('<a href="%s">twitterデータ取得</a>', $admin_url);
 		}

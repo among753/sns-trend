@@ -312,5 +312,21 @@ CREATE TABLE ".$this->table_name." (
 		return $where;
 	}
 
+	public function get_count($post_id, $term) {
+		$term;
+		$query = $this->wpdb->prepare(
+			"
+			SELECT count({$this->trend_created_at})
+			FROM {$this->table_name}
+			WHERE {$this->post_id}=%s AND
+			{$this->trend_created_at} BETWEEN %s AND %s
+			ORDER BY {$this->trend_created_at} DESC
+			",
+			$post_id,
+			"1700-01-01 00:00:00","2019-08-06 18:50:11"
+		);
+		return $trend_created_at = $this->wpdb->get_var($query);
+	}
+
 
 }
