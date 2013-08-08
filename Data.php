@@ -95,7 +95,7 @@ class Data {
 				$this->twitter->getAccessToken();
 				$param = array(
 					'q' => Twitter::consolidatedQuery($post->post_title, $trend_keywords),
-					'count' => '5', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
+					'count' => '100', // The number of tweets to return per page, up to a maximum of 100. Defaults to 15.
 				);
 				$result = $this->twitter->search($param);
 
@@ -113,7 +113,7 @@ class Data {
 
 				// 全時間取得
 				$trend_count_all = $this->trends->get_count($post_id, $term='all');
-//				var_dump($trend_count_all);
+				var_dump($trend_count_all);
 
 				// postmetaに保存
 				update_post_meta($post_id, $this->posts->meta["trend_count_all"], $trend_count_all);
@@ -132,7 +132,7 @@ class Data {
 //		var_dump($this->data);
 		//#TODO DEBUG twitterからデータを取得した時はDEBUG表示
 		if ($this->data)
-			Twitter::render_twitter_list($this->data->statuses);
+//			Twitter::render_twitter_list($this->data->statuses);
 
 		//#TODO データの一覧を出力
 		echo "<strong>#TODO pagenationのパラメーターにsaveがついて毎回保存しちゃう。</strong>";//#TODO

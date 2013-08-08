@@ -41,6 +41,8 @@ class SnsTrend {
 		register_activation_hook(__FILE__, array($this, 'activate'));
 		register_deactivation_hook(__FILE__, array($this, 'deactivate'));
 
+		//cron schedule
+		$cron = new Cron();
 
 		// カスタムポストタイプ登録
 		$trend = new CustomPostType();
@@ -70,6 +72,9 @@ class SnsTrend {
 		// 複数テーブルのアクティベート化 tableをmodel化してmodel単位で扱う
 		$trends = new Trends();
 
+		//TODO cron schedule
+		wp_schedule_event(time(), '5minute', Cron::MY_SCHEDULE);
+
 		if($trends->table_exists()) {
 			//データベースが最新かどうか確認
 			if(version_compare(get_option($this->option_db_version_name, 0), $this->db_version, ">="))
@@ -85,11 +90,13 @@ class SnsTrend {
 
 		//データベースのバージョンを保存する
 		update_option($this->option_db_version_name, $this->db_version);
+
 	}
 
 	public function deactivate() {
-		//var_dump("bbbbb");
+		wp_clear_scheduled_hook(Cron::MY_SCHEDULE);
 	}
+
 
 
 
