@@ -234,7 +234,7 @@ CREATE TABLE ".$this->table_name." (
 	/**
 	 * @param $row
 	 */
-	public function save( $row ) {
+	public function save($row) {
 		//var_dump($row);	//$row = array();
 
 		$default = array();
@@ -247,10 +247,9 @@ CREATE TABLE ".$this->table_name." (
 		}
 		$row = array_merge($default, $row);
 //		var_dump($row,$format);
-//		trigger_error(print_r($row,true));
 
 		if ($this->data_exist($row[$this->trend_type], $row[$this->trend_id]) == 1) {
-			return $this->wpdb->update(
+			$this->wpdb->update(
 				$this->table_name,
 				$row,
 				array($this->trend_type => $row[$this->trend_type], $this->trend_id => $row[$this->trend_id]),
@@ -258,8 +257,11 @@ CREATE TABLE ".$this->table_name." (
 				array('%s', '%d')
 			);
 		} else {
-			return $this->wpdb->insert( $this->table_name, $row, $format );
+			$this->wpdb->insert( $this->table_name, $row, $format );
 		}
+
+		//#TODO エラー処理 エラー返す
+		return $result = true;
 	}
 
 	/**

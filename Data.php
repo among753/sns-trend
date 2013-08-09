@@ -100,7 +100,7 @@ class Data {
 				$result = $this->twitter->search($param);
 
 				// 取得データを保存
-				$this->twitter->save($post, $result);
+				$this->twitter->save($post);
 
 
 
