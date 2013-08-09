@@ -9,6 +9,7 @@
 //namespace SnsTrend\widgets;
 //use WP_Widget;
 
+use SnsTrend\CustomPostType;
 use SnsTrend\Model\Posts;
 use SnsTrend\Model\Trends;
 
@@ -27,8 +28,6 @@ class SnsTrendRankingWidget extends WP_Widget {
 	 * @var Posts
 	 */
 	protected $posts;
-
-	protected $post_type = 'trend';//TODO
 
 	/** constructor */
 	function __construct() {
@@ -49,16 +48,9 @@ class SnsTrendRankingWidget extends WP_Widget {
 		extract( $args );
 //		var_dump($instance);
 
-		//TODO post_idごとの数を並べる
-		$posts = get_posts(array(
-			'post_type'       => $this->post_type,
-			'order' => 'DESC',
-			'orderby' => 'meta_value_num',// string:meta_value number:meta_value_num
-			'meta_key' => $this->posts->meta['trend_count_all']
-		));
-		//var_dump($posts);
-
-
+		// post_idごとの数を並べる
+		$posts = $this->posts->get_posts_trends();
+//		var_dump($posts);
 
 		$title = apply_filters('widget_title', empty($instance['title']) ? '' : $instance['title'], $instance, $this->id_base);
 		$team = empty($instance['team']) ? '' : $instance['team'] ;

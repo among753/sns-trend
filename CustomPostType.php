@@ -18,7 +18,6 @@ use SnsTrend\Model\Trends;
  */
 class CustomPostType {
 
-	public $post_type = 'trend';
 	const POST_TYPE = 'trend';
 
 	public $meta_box;
