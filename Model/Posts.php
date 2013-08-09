@@ -7,6 +7,7 @@
  */
 
 namespace SnsTrend\Model;
+use SnsTrend\CustomPostType;
 use wpdb;
 
 class Posts {
@@ -97,6 +98,17 @@ class Posts {
 			)*/
 		);
 
+	}
+
+	public function get_posts_trends( $args=array() ) {
+		$default = array(
+			'post_type'       => CustomPostType::POST_TYPE,
+			'numberposts' => -1,
+			'order' => 'DESC',
+			'orderby' => 'meta_value_num',// string:meta_value number:meta_value_num
+			'meta_key' => $this->meta['trend_count_all']
+		);
+		return get_posts(array_merge($default, $args));
 	}
 
 } 

@@ -9,6 +9,7 @@
 
 namespace SnsTrend;
 
+use SnsTrend\Model\Posts;
 use SnsTrend\Model\Trends;
 use WP_HTTP_Proxy;
 use TwitterOAuth;
@@ -33,7 +34,7 @@ class Twitter {
 	 */
 	public $connection;
 
-	public $type = 'twitter';
+	const TYPE = 'twitter';
 
 	public $option_name         = 'sns_trend_twitter';
 	public $options = array(
@@ -64,11 +65,17 @@ class Twitter {
 	 */
 	public $trends;
 
+	/**
+	 * @var Posts
+	 */
+	protected $posts;
+
 
 
 	public function __construct() {
 
 		$this->trends = new Trends();
+		$this->posts = new Posts();
 
 		// optionから取得しセット
 		$this->setProperty();
@@ -165,9 +172,7 @@ class Twitter {
 	}
 
 	public function invalidate() {
-		$bt = $this->connection->getBearerToken();
-		return $this->connection->invalidateBearerToken($bt);
-
+		return $this->connection->invalidateBearerToken( $this->connection->getBearerToken() );
 	}
 
 	/**
@@ -182,14 +187,19 @@ class Twitter {
 		return $query = $title . " OR " . preg_replace("/,/", " OR ", $keywords);
 	}
 
-	public function save($post)
-	{
-		foreach ($this->tweets->statuses as $tweet) {
+	public function save( $post, $tweets=array() ) {
+		if (empty($tweets))
+			$tweets = $this->tweets;
+
+		if ( empty($tweets->statuses) )
+			return false;
+
+		foreach ($tweets->statuses as $tweet) {
 			//#TODO データ整形
 
 			$row = array(
 				$this->trends->post_id => $post->ID,
-				$this->trends->trend_type => $this->type,
+				$this->trends->trend_type => self::TYPE,
 				$this->trends->trend_id => $tweet->id_str,//32bitOSではint型でbigintがオーバーフローする・・
 				$this->trends->trend_created_at => gmdate("Y-m-d H:i:s", (int)strtotime($tweet->created_at) + (int)date_i18n('Z')),//TODO ローカルタイム GMTも扱う？
 				$this->trends->trend_title => $post->post_title,
@@ -200,9 +210,18 @@ class Twitter {
 				$this->trends->modified => current_time('mysql'),
 			);
 //			var_dump(date_i18n('Z'),$row);
+//			trigger_error(print_r($row,true));
 
-			$this->trends->save($row);
+			$result = $this->trends->save($row);
+			trigger_error(print_r(count($tweets->statuses),true));//TODO DEBUG 8回目ぐらいで急に$tweetsの値がなくなる！？ メモリリーク？？
+
+//			trigger_error(($result)?"truuuu":"faluseeeeeee");
 		}
+	}
+
+	public function save_all() {
+
+
 	}
 
 	/**
@@ -223,4 +242,6 @@ class Twitter {
 			echo "</li>".PHP_EOL;
 		}
 	}
+
+
 }
