@@ -36,6 +36,8 @@ class SnsTrend {
 	public $db_version = "0.1.0";
 	public $option_db_version_name = 'sns_trend_db_version';
 
+	const NAME_DOMAIN = "sns-trend";
+
 	public function __construct() {
 		//Register Activation Hook.
 		register_activation_hook(__FILE__, array($this, 'activate'));

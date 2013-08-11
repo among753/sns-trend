@@ -102,22 +102,6 @@ class Data {
 				// 取得データを保存
 				$this->twitter->save($post, $result);
 
-
-
-				//TODO postmetaにsns_trend_countを保存
-//				$trend_count['day'];
-//				$trend_count['week'];
-//				$trend_count['month'];
-//				$trend_count['year'];
-//				$trend_count['all'];
-
-				// 全時間取得
-				$trend_count_all = $this->trends->get_count($post_id, $term='all');
-				var_dump($trend_count_all);
-
-				// postmetaに保存
-				update_post_meta($post_id, $this->posts->meta["trend_count_all"], $trend_count_all);
-
 				return $this->data = $result;
 			case 'invalidate':
 				return $this->data = $this->twitter->invalidate();// TODO 設定画面に移動
@@ -139,10 +123,12 @@ class Data {
 
 		$sns_trend_list_table = new ListTable();
 		$param = array(
-			'trend_type' => 'twitter'
+			"wheres" => array(
+				'trend_type' => 'twitter'
+			)
 		);
 
-		if ( isset($_REQUEST['post']) ) $param['post_id'] = $_REQUEST['post'];
+		if ( isset($_REQUEST['post']) ) $param['post_id'] = $_REQUEST['post'];//TODO ???
 
 
 		$sns_trend_list_table->set_prepare_items_param($param);// prepare_items()が引数取れないのでここでset

@@ -73,6 +73,8 @@ class MetaBox {
 				// wp_ajax_*(admin-ajax.phpがPOSTで受け取ったaction名)
 				add_action('wp_ajax_myplugin_elev_lookup', array($this, 'myplugin_ajax_elev_lookup'));
 
+
+
 				// admin-ajax.phpへリクエストを送信し返ってきた情報をもとにページ情報を出力
 				// wp-admin/load-script.phpでjQuery本体読み込んでるのでそれより後
 				add_action( 'admin_head-post.php', array($this, 'sh_show_json'), 20 );
@@ -421,7 +423,6 @@ class MetaBox {
 		$json = json_encode( $array );
 		nocache_headers();
 		header( "Content-Type: application/json; charset=" . get_bloginfo( 'charset' ) );
-		//echo $json;
 		die($json);
 	}
 

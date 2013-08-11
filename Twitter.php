@@ -165,7 +165,7 @@ class Twitter {
 			update_option($this->option_name, $this->options);
 			$this->tweets = "Bearer Tokenが無効 リロードしてください。";
 		} else {
-			var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
+//			echo "x_rate_limit_remaining: "; var_dump( $this->connection->http_header['x_rate_limit_remaining'] );
 			$this->tweets = $result;
 		}
 		return $this->tweets;
@@ -205,18 +205,34 @@ class Twitter {
 				$this->trends->trend_title => $post->post_title,
 				$this->trends->trend_text => $tweet->text,
 				$this->trends->trend_user_id => $tweet->user->id,
-				$this->trends->trend_data => serialize($tweet),
+				$this->trends->trend_data => json_encode($tweet),
 				$this->trends->created => current_time('mysql'),
 				$this->trends->modified => current_time('mysql'),
 			);
 //			var_dump(date_i18n('Z'),$row);
-//			trigger_error(print_r($row,true));
 
 			$result = $this->trends->save($row);
-			trigger_error(print_r(count($tweets->statuses),true));//TODO DEBUG 8回目ぐらいで急に$tweetsの値がなくなる！？ メモリリーク？？
+			$results[$post->ID][$result][] = $tweet->id_str;
 
-//			trigger_error(($result)?"truuuu":"faluseeeeeee");
 		}
+
+		//TODO postmetaにsns_trend_countを保存
+//				$trend_count['day'];
+//				$trend_count['week'];
+//				$trend_count['month'];
+//				$trend_count['year'];
+//				$trend_count['all'];
+
+		// 全時間取得
+		$trend_count_all = $this->trends->get_count($post->ID, $term='all');
+//		var_dump($post->ID, $trend_count_all);
+		// postmetaに保存
+		$result = update_post_meta($post->ID, $this->posts->meta["trend_count_all"], $trend_count_all);
+		if ( !$result )
+			$trend_count_all = false;
+		$results[$post->ID]['count'] = $trend_count_all;
+
+		return $results;
 	}
 
 	public function save_all() {
@@ -225,22 +241,23 @@ class Twitter {
 	}
 
 	/**
+	 * render single tweet
+	 *
 	 * @param object $tweets
 	 */
-	public static function render_twitter_list($tweets) {
-		if (!$tweets) return;
-//		var_dump($tweets);
-
-		foreach($tweets as $tweet){
-//			var_dump($tweet);
-			$text = Twitter_Autolink::create($tweet->text)
-				->setNoFollow(false)
-				->addLinks();
-			echo '<li>'.PHP_EOL;
-			echo '<p class="twitter_icon"><a href="http://twitter.com/'.$tweet->user->screen_name.'" target="_blank"><img src="'.$tweet->user->profile_image_url.'" alt="icon" width="46" height="46" /></a></p>'.PHP_EOL;
-			echo '<div class="twitter_tweet"><p><span class="twitter_content">'.$text.'</span><span class="twitter_date">'.$tweet->created_at.'</span></p></div>'.PHP_EOL;
-			echo "</li>".PHP_EOL;
-		}
+	public static function render_twitter_list( $tweet, $return = null ) {
+		$text = Twitter_Autolink::create($tweet->text)
+			->setNoFollow(false)
+			->addLinks();
+		$data = <<< EOF
+<li>
+	<p class="twitter_icon"><a href="http://twitter.com/{$tweet->user->screen_name}" target="_blank"><img src="{$tweet->user->profile_image_url}" alt="icon" width="46" height="46" /></a></p>
+	<div class="twitter_tweet">
+		<p><span class="twitter_content">{$text}</span><span class="twitter_date">{$tweet->created_at}</span></p>
+	</div>
+</li>
+EOF;
+		return ( $return === true ) ? $data : print $data;
 	}
 
 

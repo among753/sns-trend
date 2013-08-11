@@ -87,7 +87,7 @@ class ListTable extends WP_List_Table {
 	function column_default($item, $column_name){
 		switch($column_name){
 			case $this->model->trend_data:
-				$trend_data = unserialize($item[$column_name]);
+				$trend_data = json_decode($item[$column_name]);
 				return $trend_data->text;
 			case $this->model->created:
 			case $this->model->modified:
@@ -158,7 +158,7 @@ class ListTable extends WP_List_Table {
 	}
 
 	function column_trend_user_id($item) {
-		$tweet = unserialize($item[$this->model->trend_data]);
+		$tweet = json_decode($item[$this->model->trend_data]);
 
 		return sprintf('<p class="twitter_icon"><a href="http://twitter.com/%1$s" target="_blank"><img src="%2$s" alt="icon" width="46" height="46" /></a>%3$s(@%1$s)</p>',
 			$tweet->user->screen_name,
@@ -317,7 +317,7 @@ class ListTable extends WP_List_Table {
 		/**
 		 * First, lets decide how many records per page to show
 		 */
-		$per_page = 10;
+		$per_page = 300;
 
 
 		/**
@@ -357,7 +357,7 @@ class ListTable extends WP_List_Table {
 		 * use sort and pagination data to build a custom query instead, as you'll
 		 * be able to use your precisely-queried data immediately.
 		 */
-		$data = $this->model->get($this->prepare_items_param, null, null, 'ARRAY_A');
+		$data = $this->model->get($this->prepare_items_param, 'ARRAY_A');
 //		var_dump($data);
 		//$data = $this->example_data;
 

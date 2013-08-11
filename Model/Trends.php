@@ -205,12 +205,23 @@ CREATE TABLE ".$this->table_name." (
 	 * @param string $output_type
 	 * @return mixed
 	 */
-	public function get( $wheres=null, $orderby=null, $limit=null, $output = OBJECT ) {
+	public function get( $args=array(), $output = OBJECT ) {
+		// TODO $argsに変更
+		$default = array(
+			"wheres"  => array(),
+			"orderby" => $this->trend_created_at,
+			"order"   => "DESC",
+			"limit"   => "9223372036854775806",
+			"offset"  => "0",
+		);
+		$args = array_merge($default, $args);
 
-		//#TODO orderby limit を追加する
 		$query = $this->wpdb->prepare(
-			"SELECT * FROM {$this->table_name}" . $this->get_where($wheres),
-			$wheres
+			"SELECT * FROM {$this->table_name}" .
+			$this->get_where($args['wheres']) .
+			" ORDER BY {$args['orderby']} {$args['order']} " .
+			" LIMIT {$args['limit']} OFFSET {$args['offset']} ",
+			$args['wheres']
 		);
 //		var_dump($query);
 		return $this->wpdb->get_results($query, $output);
@@ -231,11 +242,29 @@ CREATE TABLE ".$this->table_name." (
 	}
 
 
+	public function get_count($post_id, $term) {
+		$term;
+		$query = $this->wpdb->prepare(
+			"
+			SELECT count({$this->trend_created_at})
+			FROM {$this->table_name}
+			WHERE {$this->post_id}=%s AND
+			{$this->trend_created_at} BETWEEN %s AND %s
+			ORDER BY {$this->trend_created_at} DESC
+			",
+			$post_id,
+			"1700-01-01 00:00:00","2019-08-06 18:50:11"
+		);
+		return $trend_created_at = $this->wpdb->get_var($query);
+	}
+
+
+
 	/**
 	 * @param $row
 	 */
 	public function save( $row ) {
-		//var_dump($row);	//$row = array();
+//		var_dump($row);	//$row = array();
 
 		$default = array();
 		$format = array();
@@ -247,18 +276,19 @@ CREATE TABLE ".$this->table_name." (
 		}
 		$row = array_merge($default, $row);
 //		var_dump($row,$format);
-//		trigger_error(print_r($row,true));
 
 		if ($this->data_exist($row[$this->trend_type], $row[$this->trend_id]) == 1) {
-			return $this->wpdb->update(
+			$result = $this->wpdb->update(
 				$this->table_name,
 				$row,
 				array($this->trend_type => $row[$this->trend_type], $this->trend_id => $row[$this->trend_id]),
 				$format,
 				array('%s', '%d')
 			);
+			return $result ? "updated" : false ;
 		} else {
-			return $this->wpdb->insert( $this->table_name, $row, $format );
+			$result = $this->wpdb->insert( $this->table_name, $row, $format );
+			return $result ? "inserted" : false ;
 		}
 	}
 
@@ -310,21 +340,6 @@ CREATE TABLE ".$this->table_name." (
 		return $where;
 	}
 
-	public function get_count($post_id, $term) {
-		$term;
-		$query = $this->wpdb->prepare(
-			"
-			SELECT count({$this->trend_created_at})
-			FROM {$this->table_name}
-			WHERE {$this->post_id}=%s AND
-			{$this->trend_created_at} BETWEEN %s AND %s
-			ORDER BY {$this->trend_created_at} DESC
-			",
-			$post_id,
-			"1700-01-01 00:00:00","2019-08-06 18:50:11"
-		);
-		return $trend_created_at = $this->wpdb->get_var($query);
-	}
 
 
 }
