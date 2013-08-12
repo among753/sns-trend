@@ -139,10 +139,12 @@ class Twitter {
 	/**
 	 * twitterAPIにアクセスしてツイートを取得
 	 * https://dev.twitter.com/docs/api/1.1/get/search/tweets
-	 * @param string $keyword
+	 *
+	 * @param $param
+	 * @internal param string $keyword
 	 * @return array
 	 */
-	public function search($param) {
+	public function search( $param ) {
 		$default = array(
 			'q' => '', // A UTF-8, URL-encoded search query of 1,000 characters maximum, including operators.
 			'geocode' => '', // Example Values: 37.781157,-122.398720,1mi(km)
@@ -243,7 +245,10 @@ class Twitter {
 	/**
 	 * render single tweet
 	 *
-	 * @param object $tweets
+	 * @param $tweet
+	 * @param null $return
+	 * @internal param object $tweets
+	 * @return int|string
 	 */
 	public static function render_twitter_list( $tweet, $return = null ) {
 		$text = Twitter_Autolink::create($tweet->text)
