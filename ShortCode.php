@@ -49,6 +49,7 @@ class ShortCode {
 	public function setSnsTrendList( $atts ) {
 		global $post, $wp_query;
 
+		// ショートコードの引数
 		$post_id   = $post->ID;
 		$trend_type = Twitter::TYPE;
 		$limit = 10;
@@ -61,27 +62,36 @@ class ShortCode {
 			$atts
 		));
 
-
-		if ( is_archive() ) {
-			// 表示件数を減らす
-			$limit = 3;
-		}
+		//idの値設定
 		$show_id   = "show-trend-list-" . $post_id;
 		$form_id   = "load-trend-list-" . $post_id;
 		$submit_id = "load-trend-list-submit-" . $post_id;
+
+		//アーカイブページでの表示処理
+		if ( is_archive() ) {
+			$limit = 3; // 表示件数を減らす
+		} else {
 		?>
 		<style type="text/css">
+			<?php echo '#' . esc_attr($show_id); ?> {
+				height: 580px;
+				position: relative;
+				width: 100%;
+				overflow-x: hidden;
+				overflow-y: scroll;
+			}
 		</style>
+		<?php } ?>
 		<div id="<?php esc_attr_e($show_id); ?>">
 			<p>Twitter list</p>
+			<ol></ol>
+			<form action="" name="<?php esc_attr_e($form_id); ?>">
+				<?php wp_nonce_field( self::ACTION ); ?>
+				<input type="hidden" name="limit" id="limit" value="<?php esc_attr_e($limit); ?>">
+				<input type="hidden" name="offset" id="offset" value="0">
+				<input type="button"  name="<?php esc_attr_e($submit_id); ?>" id="<?php esc_attr_e($submit_id); ?>"value="<?php _e("更に読み込む", SnsTrend::NAME_DOMAIN);?>" style="width: 100%;line-height: 3em;">
+			</form>
 		</div>
-		<!--div id="<?php esc_attr_e($submit_id); ?>" class="btn"><?php _e("更に読み込む", SnsTrend::NAME_DOMAIN);?></div-->
-		<form action="" name="<?php esc_attr_e($form_id); ?>">
-			<?php wp_nonce_field( self::ACTION ); ?>
-			<input type="hidden" name="limit" id="limit" value="<?php esc_attr_e($limit); ?>">
-			<input type="hidden" name="offset" id="offset" value="0">
-			<input type="button"  name="<?php esc_attr_e($submit_id); ?>" id="<?php esc_attr_e($submit_id); ?>"value="<?php _e("更に読み込む", SnsTrend::NAME_DOMAIN);?>" style="width: 100%;line-height: 3em;">
-		</form>
 		<script type="text/javascript">
 			ajaxurl = '<?php echo admin_url( 'admin-ajax.php' ); ?>';
 			jQuery(function($){
@@ -90,7 +100,7 @@ class ShortCode {
 
 				var $submit_button = $(<?php echo "'#".esc_attr($submit_id)."'"; ?>);
 				$submit_button.loading = false;
-				var $show_area = $(<?php echo "'#".esc_attr($show_id)."'"; ?>);
+				var $show_area = $(<?php echo "'#".esc_attr($show_id)." ol'"; ?>);
 
 			// 画面スクロールによる自動ローディング
 				$(window).scroll(function(){
@@ -98,8 +108,7 @@ class ShortCode {
 					var distanceTop = $submit_button.offset().top - $(window).height();
 					// 対象まで達しているかどうかを判別
 					if ( $(window).scrollTop() > distanceTop && $submit_button.loading==false && is_archive==false) {
-						$submit_button.loading = true;
-						$submit_button.trigger('click');
+//						$submit_button.trigger('click');
 					}
 				});
 
@@ -123,9 +132,10 @@ class ShortCode {
 						success: function(json){
 							// php処理成功後
 //							var json_str = JSON.stringify(json);//Jsonデータを文字列に変換
-							// TODO アニメーション.slideDown("fast")
-							$show_area.append(json.data);
-//							$show_area.children("li > *").fadeIn(1000).hide().slideDown("slow");
+							var $data = $(json.data);
+							for(var i=0; i < $data.length; i++) {
+								$show_area.append($($data[i]).hide()).find("li").slideDown("slow");
+							}
 							// offsetをlimit分増やす
 							$offset.val(Number(json.offset) + Number(json.limit));// TODO 実liの数を数えた方がいいかも
 							// ボタン処理
@@ -145,7 +155,8 @@ class ShortCode {
 					});
 					// click後のJavaScript処理
 					// ボタン処理
-					$(this).css({
+					$submit_button.loading = true;
+						$(this).css({
 						'pointerEvents': 'none',
 						'color': '#ccc'
 					});

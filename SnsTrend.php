@@ -58,6 +58,9 @@ class SnsTrend {
 		// ショートコードを設定
 		$trend_short_code = new ShortCode();
 
+		// アーカイブページ（CustomPostType::POST_TYPE）
+		$archive_Trend = new ArchiveTrend();
+
 		//#TODO widgets namespaceが使えない
 		require_once SNS_TREND_ABSPATH . "/widgets/sns_trend_ranking_widget.php";
 		add_action('widgets_init', function(){register_widget("SnsTrendRankingWidget");});
