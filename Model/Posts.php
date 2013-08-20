@@ -109,9 +109,12 @@ class Posts {
 			'orderby' => 'meta_value_num',// string:meta_value number:meta_value_num
 			'meta_key' => $this->meta['trend_count_all']
 		);
-		$sss= new WP_Query(array_merge($default, $args));
-		var_dump($sss);
 		return get_posts(array_merge($default, $args));
 	}
+
+	public static function consolidatedQuery($title, $keywords) {
+		return $query = $title . " OR " . preg_replace("/,/", " OR ", $keywords);
+	}
+
 
 } 

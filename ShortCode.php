@@ -7,6 +7,7 @@
  */
 
 namespace SnsTrend;
+use SnsTrend\Model\Posts;
 use SnsTrend\Model\Trends;
 
 /**
@@ -20,6 +21,11 @@ class ShortCode {
 	 */
 	protected $trends;
 
+	/**
+	 * @var Posts
+	 */
+	protected $posts;
+
 
 	//TODO Ajax classを作って移動する？
 	const ACTION = "sns_trend_list";
@@ -27,6 +33,7 @@ class ShortCode {
 	public function __construct() {
 
 		$this->trends = new Trends();
+		$this->posts  = new Posts();
 
 		// TODO JavaScriptをフックで登録 if front </body>の前
 
@@ -34,6 +41,10 @@ class ShortCode {
 		add_action('wp_ajax_nopriv_' . self::ACTION, array(&$this, 'getTrendList'));
 		add_action('wp_ajax_' . self::ACTION,        array(&$this, 'getTrendList'));
 
+
+
+
+		add_shortcode('sns-trend-blog', array($this, 'setSnsTrendBlog'));
 
 
 
@@ -203,5 +214,60 @@ class ShortCode {
 		header( "Content-Type: application/json; charset=" . get_bloginfo( 'charset' ) );
 		die( json_encode($args) );
 	}
+
+
+
+
+
+
+	public function setSnsTrendBlog( $atts ) {
+		global $post;
+
+		// ショートコードの引数
+		// TODO global $postのみの表示にする？
+		$limit = 10;
+		extract(shortcode_atts(
+			array(
+				'limit'      => $limit
+			),
+			$atts
+		));
+
+		$keywords = $this->posts->meta['trend_keywords'];
+		$q = Posts::consolidatedQuery($post->post_title, $post->$keywords);
+
+		// カスタムフィールド単体ならそのまま$post->keyで取得できる。
+		// 複数の場合一個しか取れないのでget_post_meta($post->ID, $key)を使う。
+		// http://elearn.jp/wpman/column/c20121004_01.html
+//		$meta = get_post_meta($post->ID,'radio_test');
+//		var_dump($meta);
+
+		// TODO とりあえずRSSを取得してそのまま表示するClass Blogを作成
+
+		// TODO 時系列で扱うのが難しいので関連記事として表示するだけにするか・・
+		$Blog = new Blog();
+
+		$blogs = $Blog->search( $q );
+
+//		var_dump($blogs);
+
+		$Blog->renderBlogList($blogs);
+
+
+		// TODO 関連ブログを定期的に取得してTrendsテーブルに保存
+
+
+		// TODO Ajaxで関連ブログ一覧を取得して表示（件数指定）
+
+
+
+
+
+
+	}
+
+
+
+
 
 }
