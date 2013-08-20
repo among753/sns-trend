@@ -40,8 +40,7 @@ class Cron {
 		$this->posts = new Posts();
 		$this->twitter = new Twitter();
 
-
-		//TODO cron schedule
+		// アクションに登録 アクションはプラグインアクティベート時にスケジューリングされる
 		add_action(self::MY_SCHEDULE, array($this, 'do_schedule'));
 		//　cron_schedulesに追加
 		add_filter( 'cron_schedules', array($this, 'filter_cron_schedules') );
@@ -49,8 +48,6 @@ class Cron {
 
 	public function do_schedule() {
 		set_time_limit(180);// time out 防止
-
-		//TODO Twitterからデータを取得してDBに保存する。
 
 		//TODO rate limit を考慮する
 
@@ -69,8 +66,6 @@ class Cron {
 			echo "x_rate_limit_remaining: "; var_dump( $this->twitter->connection->http_header['x_rate_limit_remaining'] );
 //			trigger_error( "x_rate_limit_remaining: " . $this->twitter->connection->http_header['x_rate_limit_remaining'] );
 
-
-
 			// 取得データを保存
 			$result = $this->twitter->save($post, $result);
 //			echo "save: "; var_dump($result);
@@ -79,11 +74,31 @@ class Cron {
 
 	}
 
+	/**
+	 * @param $schedules
+	 * @return array
+	 */
 	public function filter_cron_schedules( $schedules ) {
-		return $schedules = array(
-			'5minute'      => array( 'interval' => 5 * MINUTE_IN_SECONDS,       'display' => __( 'Five minute' ) ),
-//			'5minute'      => array( 'interval' => 10 * MINUTE_IN_SECONDS / MINUTE_IN_SECONDS,       'display' => __( 'Five minute' ) ),
+		$schedules['1minute'] = array(
+			'interval' => 1 * MINUTE_IN_SECONDS,
+			'display' => __( 'One minute' )
 		);
+		$schedules['5minute'] = array(
+			'interval' => 5 * MINUTE_IN_SECONDS,
+			'display' => __( 'Five minute' )
+		);
+		return $schedules;
 	}
+
+	public static function activate() {
+		// TODO
+		wp_schedule_event(time(), '1minute', self::MY_SCHEDULE);
+	}
+	public static function deactivate() {
+		wp_clear_scheduled_hook(self::MY_SCHEDULE);
+	}
+
+
+
 
 }

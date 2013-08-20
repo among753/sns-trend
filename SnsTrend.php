@@ -77,8 +77,8 @@ class SnsTrend {
 		// 複数テーブルのアクティベート化 tableをmodel化してmodel単位で扱う
 		$trends = new Trends();
 
-		//TODO cron schedule
-		wp_schedule_event(time(), '5minute', Cron::MY_SCHEDULE);
+		// cron schedule
+		Cron::activate();
 
 		if($trends->table_exists()) {
 			//データベースが最新かどうか確認
@@ -99,7 +99,8 @@ class SnsTrend {
 	}
 
 	public function deactivate() {
-		wp_clear_scheduled_hook(Cron::MY_SCHEDULE);
+		// cron schedule
+		Cron::deactivate();
 	}
 
 

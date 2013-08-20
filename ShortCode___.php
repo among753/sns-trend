@@ -109,7 +109,50 @@ class ShortCode {
 				var $submit_button = $(<?php echo "'#".esc_attr($submit_id)."'"; ?>);
 				$submit_button.loading = false;
 
-				// 画面スクロールによる自動ローディング
+
+
+				if ((!window.firebug || !firebug.firebuglite) &&
+					(!window.console || !console.firebuglite)) {
+					window.console = {};
+					window.console['log'] = function () {}
+				}
+
+				Twitter = {
+					search: function(data) {
+
+						var defer = $.Deferred();
+						$.ajax({
+							type:    'POST',
+							url:     ajaxurl,
+							data:    data,
+							success: defer.resolve,
+							error:   defer.reject
+						});
+						return defer.promise();
+					},
+					show: function(ele, prop, data) {
+						console.log(data);
+						ele.empty().hide();
+						if (!data.error) {
+							if (data.results.length) {
+								$.each(data.results, function(i, tweet) {
+									Twitter.msg(ele, prop, tweet.text);
+								});
+							} else {
+								Twitter.msg(ele, prop, 'no results');
+							}
+						} else {
+							Twitter.msg(ele, prop, data.error);
+						}
+						ele.fadeIn();
+					},
+					msg: function(ele, prop, msg) {
+						ele.append(prop.before + msg + prop.after);
+					}
+				};
+
+
+			// 画面スクロールによる自動ローディング
 //				$(window).scroll(function(){
 				$show_box.find(".scroll").scroll(function(){
 					// 対象までの高さを取得
@@ -120,12 +163,31 @@ class ShortCode {
 					$show_box.find("p:first").text(distanceTop + " | " + (Number(distanceShowArea) + Number(height) ));
 					// 対象まで達しているかどうかを判別
 //					if ( $(window).scrollTop() > distanceTop && $submit_button.loading==false && is_archive==false) {
-					if ( distanceTop < (Number(distanceShowArea) + Number(height) ) && $submit_button.loading==false && is_archive==false) {
-						$submit_button.trigger('click');
+					if (distanceTop < (Number(distanceShowArea) + Number(height)) &&
+						$submit_button.loading==false &&
+						is_archive==false) {
+//						$submit_button.trigger('click');
 					}
 				});
 
 				$submit_button.click(function(){
+
+					var form_data = {
+						"action"           : "<?php echo self::ACTION; ?>",// action hook
+						"post_id"          : "<?php echo esc_js($post_id); ?>",
+						"limit"            : $limit.val(),
+						"offset"           : $offset.val(),
+						"_wpnonce"         : $_wpnonce.val(),
+						"_wp_http_referer" : $_wp_http_referer.val()
+					};
+
+					Twitter.search(form_data).then(function(data) {
+						Twitter.show($('#tweets'), {
+							before: '<li>',
+							after: '</li>'
+						}, data);
+					});
+
 
 					var show_flg = false;
 
