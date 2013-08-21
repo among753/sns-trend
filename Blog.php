@@ -37,13 +37,16 @@ class Blog {
 	 * @return mixed
 	 */
 	public function search( $q ) {
+		// &tbs=qdr:h //1h以内
+		//      sbd:1 //日付順
 		$params = array(
 			'tbm' => 'blg',
 			'output' => 'rss',
 			'hl'  => 'ja',
 			'ie'  => 'UTF-8',//input encoding
 			'oe'  => 'UTF-8',//output encoding
-			'q'   => $q
+			'q'   => $q,
+			'tbs' => 'qdr:m,sbd:1'
 		);
 		$url = 'https://www.google.co.jp/search?' . http_build_query($params);
 //		$url = 'http://news.livedoor.com/topics/rss.xml';

@@ -82,6 +82,7 @@ class ShortCode {
 		if ( is_archive() ) {
 			$limit = 3; // 表示件数を減らす
 		}
+		ob_start();
 		?>
 		<style type="text/css">
 			<?php echo '#' . esc_attr($show_id); ?> > .scroll {
@@ -203,7 +204,7 @@ class ShortCode {
 							$submit_button.loading = false;
 
 							// TODO ロード終了後スクロールを1pxでもしないとアクションしないので処理を追加する
-							var distanceShowArea = $show_box.find(".scroll").offset().top;
+//							var distanceShowArea = $show_box.find(".scroll").offset().top;
 //							$show_box.find(".scroll").animate({scrollTop:distanceShowArea - 1}, 1500);
 //							$('html,body').animate({ scrollTop: 0 }, 'slow');
 						},
@@ -220,8 +221,7 @@ class ShortCode {
 
 		</script>
 	<?php
-
-
+		return ob_get_clean();
 	}
 
 	/**
@@ -260,9 +260,6 @@ class ShortCode {
 
 
 
-
-
-
 	public function setSnsTrendBlog( $atts ) {
 		global $post;
 
@@ -293,20 +290,14 @@ class ShortCode {
 		$blogs = $Blog->search( $q );
 
 //		var_dump($blogs);
-
+		ob_start();
 		$Blog->renderBlogList($blogs);
-
 
 		// TODO 関連ブログを定期的に取得してTrendsテーブルに保存
 
-
 		// TODO Ajaxで関連ブログ一覧を取得して表示（件数指定）
 
-
-
-
-
-
+		return ob_get_clean();
 	}
 
 

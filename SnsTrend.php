@@ -71,6 +71,11 @@ class SnsTrend {
 
 		//#TODO 管理メニューに追加するフック example
 		add_action('admin_menu', array($this, 'mt_add_pages'));
+
+		// TODO DEBUG
+		add_action('wp_head', function(){
+			//global $wp_query;var_dump($wp_query);
+		});
 	}
 
 	public function activate() {
