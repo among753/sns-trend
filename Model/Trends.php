@@ -153,6 +153,7 @@ class Trends {
 	 */
 	public function createTable() {
 		//#TODO せっかくなのでpropertyを使って書く
+		// TODO indexがちゃんと張れるか検証すること
 		$sql = "
 CREATE TABLE ".$this->table_name." (
   id bigint(20) NOT NULL auto_increment,
@@ -168,9 +169,10 @@ CREATE TABLE ".$this->table_name." (
   created  DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
   modified DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
   PRIMARY KEY  (id),
-  KEY (post_id),
+  KEY (trend_id),
+  KEY (trend_created_at),
   KEY (trend_user_id),
-  UNIQUE KEY type_id (trend_type, trend_id)
+  KEY type_post_id (trend_type, post_id)
 )
         ";
 		require_once ABSPATH . "wp-admin/includes/upgrade.php";
@@ -211,7 +213,7 @@ CREATE TABLE ".$this->table_name." (
 			"wheres"  => array(),
 			"orderby" => $this->trend_created_at,
 			"order"   => "DESC",
-			"limit"   => "9223372036854775806",
+			"limit"   => "9223372036854775800",
 			"offset"  => "0",
 		);
 		$args = array_merge($default, $args);
@@ -223,13 +225,27 @@ CREATE TABLE ".$this->table_name." (
 			" LIMIT {$args['limit']} OFFSET {$args['offset']} ",
 			$args['wheres']
 		);
-//		var_dump($query);
+
+/*
+$query = "
+SELECT *
+		FROM wp_trends
+WHERE trend_type = 'twitter'
+		AND post_id = '184'
+#       AND post_id = '248'
+ORDER BY trend_created_at DESC
+LIMIT 100 OFFSET 0
+";
+*/
+
+//		die(json_encode($query));
+
 		return $this->wpdb->get_results($query, $output);
 	}
 
 
 	public function get_col($col, $wheres=null, $orderby=null, $limit=null, $x = 0 ) {
-		//#TODO orderby limit を追加する
+		//#TODO orderby limit を追加する FIX
 		$query = $this->wpdb->prepare(
 			"SELECT $col FROM {$this->table_name}" . $this->get_where($wheres),
 			$wheres
@@ -253,7 +269,7 @@ CREATE TABLE ".$this->table_name." (
 			ORDER BY {$this->trend_created_at} DESC
 			",
 			$post_id,
-			"1700-01-01 00:00:00","2019-08-06 18:50:11"
+			"1700-01-01 00:00:00","2019-08-06 18:50:11"// TODO FIX
 		);
 		return $trend_created_at = $this->wpdb->get_var($query);
 	}

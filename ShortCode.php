@@ -56,6 +56,9 @@ class ShortCode {
 	 * admin-ajax.phpはdata->action = "hook_name" を見て
 	 * "wp_ajax_hook_name" のアクションフックに登録してあるfunctionを実行する
 	 * 実行されたfunctionの出力データを success:function(data){} で受け取り処理を行う
+	 * TODO FIX DBにAjaxでデータを取得する動作で2sぐらいかかるのでDBへのアクセスを減らす
+	 * TODO 10件づつDBに取りに行くのをやめて100件取得して10件表示
+	 * TODO 残り20件になったら+100件取りに行く
 	 */
 	public function setSnsTrendList( $atts ) {
 		global $post, $wp_query;
@@ -176,6 +179,11 @@ class ShortCode {
 							// php処理成功後
 //							var json_str = JSON.stringify(json);//Jsonデータを文字列に変換
 							var $data = $(json.data);
+
+							// TODO 先読みはやめて100件取得して10件づつ表示に変更
+
+
+
 							// li追加
 							$show_area.append($data.hide());
 							// 先読み分を表示しなかった場合表示(2回目は表示しないでストック)
