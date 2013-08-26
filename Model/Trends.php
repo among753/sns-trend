@@ -169,10 +169,10 @@ CREATE TABLE ".$this->table_name." (
   created  DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
   modified DATETIME DEFAULT '1900-00-00 00:00:00' NOT NULL,
   PRIMARY KEY  (id),
-  KEY (trend_id),
   KEY (trend_created_at),
   KEY (trend_user_id),
-  KEY type_post_id (trend_type, post_id)
+  KEY type_post_id (trend_type, post_id),
+  UNIQUE KEY type_id (trend_type, trend_id)
 )
         ";
 		require_once ABSPATH . "wp-admin/includes/upgrade.php";

@@ -66,7 +66,7 @@ class ShortCode {
 		// ショートコードの引数
 		$post_id   = $post->ID;
 		$trend_type = Twitter::TYPE;
-		$limit = 10;
+		$limit = 100;
 		extract(shortcode_atts(
 			array(
 				'post_id'    => $post_id,
@@ -99,11 +99,9 @@ class ShortCode {
 		<div id="<?php esc_attr_e($show_id); ?>">
 			<p>Twitter list</p>
 			<div class="<?php echo ! is_archive() ? 'scroll' : ''; ?>">
-				<ol></ol>
+				<ol style="margin-left: 40px"></ol>
 				<form action="" name="<?php esc_attr_e($form_id); ?>">
 					<?php wp_nonce_field( self::ACTION ); ?>
-					<input type="hidden" name="limit" id="limit" value="<?php esc_attr_e($limit); ?>">
-					<input type="hidden" name="offset" id="offset" value="0">
 					<input type="button"  name="<?php esc_attr_e($submit_id); ?>" id="<?php esc_attr_e($submit_id); ?>"value="<?php _e("更に読み込む", SnsTrend::NAME_DOMAIN);?>" style="width: 100%;line-height: 3em;">
 				</form>
 			</div>
@@ -117,12 +115,103 @@ class ShortCode {
 				var $show_box = $(<?php echo "'#".esc_attr($show_id)."'"; ?>);
 				var $show_area = $show_box.find("ol:first");
 				var $show_form = $show_box.find("form:first");
-				var $limit = $show_form.find("input[name='limit']");
-				var $offset = $show_form.find("input[name='offset']");
 				var $_wpnonce = $show_form.find("input[name='_wpnonce']");
 				var $_wp_http_referer = $show_form.find("input[name='_wp_http_referer']");
 				var $submit_button = $(<?php echo "'#".esc_attr($submit_id)."'"; ?>);
 				$submit_button.loading = false;
+
+				var Twitter = {
+					limit : 100,
+					offset : 0,
+					search: function(args) {
+						var defer = $.Deferred();
+						$.ajax({
+							type: 'POST',
+							url: ajaxurl,
+							data: {
+								"action"           : "<?php echo self::ACTION; ?>",// action hook
+								"post_id"          : "<?php echo esc_js($post_id); ?>",
+								"limit"            : this.limit,
+								"offset"           : this.offset,
+								"_wpnonce"         : $_wpnonce.val(),
+								"_wp_http_referer" : $_wp_http_referer.val()
+							},
+							success: defer.resolve,
+							error: defer.reject
+						});
+						return defer.promise();
+					},
+					start: function($button) {
+						// ボタン処理
+						$button.loading = true;
+						$button.show_flg = false;
+						$button.css({
+							'pointerEvents': 'none',
+							'color': '#ccc'
+						});
+					},
+					setTweets: function(json) {
+//						console.log(json);
+//							var json_str = JSON.stringify(json);//Jsonデータを文字列に変換
+						var $data = $(json.data);
+
+						// TODO データを全部取得し終わった時の処理を追加
+
+						// li追加
+						$show_area.append($data.hide());
+						// offsetを設定
+						this.offset = $show_area.find("li").length;
+					},
+					show: function($buffer, $limit) {
+						if ($submit_button.show_flg)
+							return false;
+
+						$buffer.slideDown("slow", function(){
+							Twitter.end($submit_button);
+						});
+
+						return $submit_button.show_flg = true;
+					},
+					end: function($button) {
+						// ボタン処理
+						$button.css({
+							'pointerEvents': 'auto',
+							'color': '#000'
+						});
+						// アーカイブページでは読み込みしない
+						if (is_archive)
+							$button.remove();
+
+						// loading終了処理
+						$button.loading = false;
+
+					}
+
+				};
+
+
+				$submit_button.click(function(){
+					// click後のJavaScript処理
+					Twitter.start($submit_button);
+
+					var $buffer = $show_area.find("li:hidden");
+
+					if ($buffer.length <= 10) {
+						Twitter.search(5).then(function(data) {
+							Twitter.setTweets(data);
+							Twitter.show($show_area.find("li:hidden:lt(10)"), 10);
+						});
+					}
+
+					if ($buffer.length > 0) {
+						Twitter.show($show_area.find("li:hidden:lt(10)"), 10);
+					}
+
+					return false;
+
+				}).trigger('click');
+
+
 
 				// 画面スクロールによる自動ローディング
 //				$(window).scroll(function(){
@@ -140,90 +229,7 @@ class ShortCode {
 					}
 				});
 
-				$submit_button.click(function(){
 
-					var show_flg = false;
-
-					var self = this;
-
-					if ( self.show_count === undefined )
-						self.show_count = 0;
-					self.show_count++;
-
-					// 先読みした分表示
-					$show_area.find("li:hidden").each(function(){
-						$(this).slideDown("slow");
-						show_flg = true;
-					});
-
-					// click後のJavaScript処理
-					// ボタン処理
-					$submit_button.loading = true;
-					$(this).css({
-						'pointerEvents': 'none',
-						'color': '#ccc'
-					});
-
-					$.ajax({
-						type: 'POST',
-						url: ajaxurl,
-						data: {
-							"action"           : "<?php echo self::ACTION; ?>",// action hook
-							"post_id"          : "<?php echo esc_js($post_id); ?>",
-							"limit"            : $limit.val(),
-							"offset"           : $offset.val(),
-							"_wpnonce"         : $_wpnonce.val(),
-							"_wp_http_referer" : $_wp_http_referer.val()
-						},
-						success: function(json){
-							// php処理成功後
-//							var json_str = JSON.stringify(json);//Jsonデータを文字列に変換
-							var $data = $(json.data);
-
-							// TODO 先読みはやめて100件取得して10件づつ表示に変更
-
-
-
-							// li追加
-							$show_area.append($data.hide());
-							// 先読み分を表示しなかった場合表示(2回目は表示しないでストック)
-							if ( show_flg==false && self.show_count!==2 ) {
-								$data.slideDown("slow");
-							}
-
-							// offsetをlimit分増やす
-							$offset.val(Number(json.offset) + Number(json.limit));// TODO 実liの数を数えた方がいいかも
-							// ボタン処理
-							$submit_button.css({
-								'pointerEvents': 'auto',
-								'color': '#000'
-							});
-							// アーカイブページでは読み込みしない
-							if (is_archive) {
-								$submit_button.remove();
-							}
-
-							//初期表示時ストックのためキック
-							if ( self.show_count === 1 ) {
-								$submit_button.trigger('click');
-							}
-
-							// loading終了処理
-							$submit_button.loading = false;
-
-							// TODO ロード終了後スクロールを1pxでもしないとアクションしないので処理を追加する
-//							var distanceShowArea = $show_box.find(".scroll").offset().top;
-//							$show_box.find(".scroll").animate({scrollTop:distanceShowArea - 1}, 1500);
-//							$('html,body').animate({ scrollTop: 0 }, 'slow');
-						},
-						error: function(){
-							alert('error');
-						}
-					});
-
-					return false;
-
-				}).trigger('click');
 
 			});
 
