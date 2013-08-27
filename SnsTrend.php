@@ -69,6 +69,10 @@ class SnsTrend {
 		require_once SNS_TREND_ABSPATH . "/functions.php";
 
 
+		//#TODO jqueryない場合登録
+		add_action('wp_enqueue_scripts', function(){wp_enqueue_script( 'jquery' );});
+
+
 		//#TODO 管理メニューに追加するフック example
 		add_action('admin_menu', array($this, 'mt_add_pages'));
 
