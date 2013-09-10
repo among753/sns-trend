@@ -121,9 +121,11 @@ class ShortCode {
 				$submit_button.loading = false;
 
 				var Twitter = {
-					limit : 100,
+					limit : 300,
 					offset : 0,
+					searching : false,
 					search: function(args) {
+						this.searching = true;
 						var defer = $.Deferred();
 						$.ajax({
 							type: 'POST',
@@ -162,7 +164,7 @@ class ShortCode {
 						// offsetを設定
 						this.offset = $show_area.find("li").length;
 					},
-					show: function($buffer, $limit) {
+					show: function($buffer) {
 						if ($submit_button.show_flg)
 							return false;
 
@@ -196,15 +198,17 @@ class ShortCode {
 
 					var $buffer = $show_area.find("li:hidden");
 
-					if ($buffer.length <= 10) {
+					if ($buffer.length <= Twitter.limit / 2 && !Twitter.searching) {
+
 						Twitter.search(5).then(function(data) {
 							Twitter.setTweets(data);
-							Twitter.show($show_area.find("li:hidden:lt(10)"), 10);
+							Twitter.show($show_area.find("li:hidden:lt(10)"));
+							Twitter.searching = false;
 						});
 					}
 
 					if ($buffer.length > 0) {
-						Twitter.show($show_area.find("li:hidden:lt(10)"), 10);
+						Twitter.show($show_area.find("li:hidden:lt(10)"));
 					}
 
 					return false;
